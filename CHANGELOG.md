@@ -7,22 +7,35 @@
 
 ## [Unreleased]
 
-### 修复
-
-- **英文 Windows 上中文输出崩溃**（CI 三种 Windows 任务全部失败的原因）。
-  `windows-latest` 运行器的默认输出编码是 cp1252，字符集里没有中文；
-  任何打印中文的脚本都会抛 `UnicodeEncodeError`。
-  中文 Windows 用的是 GBK（能编码中文），所以本地永远复现不出来。
-  新增 `agtstu/console.py` 提供统一的 `enable_utf8()`，CLI 与构建脚本的
-  入口处调用；工作流另设 `PYTHONUTF8` 环境变量作为兜底。
-- **构建产物不可复现**。`build_site.py` 曾把构建日期写进 `index.html`，
-  导致同一份数据每次构建的产物都不同，无法校验「提交的页面是否与数据同步」。
-  已移除，产物现在完全由输入决定。
-
 ### 计划中
 
 - GitHub Pages 在线演示
 - 阶段二内容（后端基础）
+
+---
+
+## [0.2.1] - 2026-10-15
+
+修复 CI 在 Windows 上全部失败的问题。
+
+### 修复
+
+- **英文 Windows 上中文输出崩溃**（v0.2.0 的 CI 里三种 Windows 任务全部失败的原因）。
+  `windows-latest` 运行器的默认输出编码是 cp1252，字符集里没有中文；
+  任何打印中文的脚本都会抛 `UnicodeEncodeError`。
+  中文 Windows 用的是 GBK（能编码中文），**所以本地永远复现不出来**。
+  新增 `agtstu/console.py` 提供统一的 `enable_utf8()`，CLI 与构建脚本的
+  入口处调用；工作流另设 `PYTHONUTF8` 环境变量作为兜底。
+  同时把 `cli.py` 里「模块导入时就改写全局 stdout」的写法改为在 `main()` 入口执行
+  —— 导入即产生副作用是不该有的行为。
+- **构建产物不可复现**。`build_site.py` 曾把构建日期写进 `index.html`，
+  导致同一份数据每次构建的产物都不同，无法校验「提交的页面是否与数据同步」。
+  已移除，产物现在完全由输入决定。
+
+### 新增
+
+- CI 增加一步：构建展示页后比对 `git diff`，若 `docs/index.html`
+  与 `path.yaml` 不同步则报错，提醒提交前重新构建。
 
 ---
 
@@ -82,6 +95,7 @@
 - 路径数据与引擎代码分离，改内容不需要动代码
 - 中文表格对齐：命令行输出按**显示宽度**补空格，而非字符数
 
-[Unreleased]: https://github.com/1fish4/agtstu/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/1fish4/agtstu/compare/v0.2.1...HEAD
+[0.2.1]: https://github.com/1fish4/agtstu/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/1fish4/agtstu/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/1fish4/agtstu/releases/tag/v0.1.0
