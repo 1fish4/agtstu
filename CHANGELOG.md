@@ -7,10 +7,21 @@
 
 ## [Unreleased]
 
+### 修复
+
+- **英文 Windows 上中文输出崩溃**（CI 三种 Windows 任务全部失败的原因）。
+  `windows-latest` 运行器的默认输出编码是 cp1252，字符集里没有中文；
+  任何打印中文的脚本都会抛 `UnicodeEncodeError`。
+  中文 Windows 用的是 GBK（能编码中文），所以本地永远复现不出来。
+  新增 `agtstu/console.py` 提供统一的 `enable_utf8()`，CLI 与构建脚本的
+  入口处调用；工作流另设 `PYTHONUTF8` 环境变量作为兜底。
+- **构建产物不可复现**。`build_site.py` 曾把构建日期写进 `index.html`，
+  导致同一份数据每次构建的产物都不同，无法校验「提交的页面是否与数据同步」。
+  已移除，产物现在完全由输入决定。
+
 ### 计划中
 
-- GitHub Actions 自动测试
-- 启动 GitHub Pages 在线演示
+- GitHub Pages 在线演示
 - 阶段二内容（后端基础）
 
 ---
