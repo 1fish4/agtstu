@@ -13,18 +13,15 @@
 from __future__ import annotations
 
 import argparse
-import sys
 import unicodedata
 from pathlib import Path
 
 from . import graph, progress
+from .console import enable_utf8
 from .loader import load_nodes
 from .model import Node
 
-#: 终端标记。Windows 默认可能是 GBK，这里强制用 UTF-8 输出。
-if hasattr(sys.stdout, "reconfigure"):
-    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
-
+#: 终端标记。
 MARK_DONE = "✓"
 MARK_OPEN = "○"
 MARK_LOCK = "·"
@@ -309,6 +306,10 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: list[str] | None = None) -> int:
+    # 英文 Windows 的默认输出编码是 cp1252，打印中文会直接抛异常。
+    # 入口处统一切到 UTF-8。
+    enable_utf8()
+
     parser = build_parser()
     args = parser.parse_args(argv)
 
