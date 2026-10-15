@@ -1,0 +1,383 @@
+# =============================================================================
+#  AgtStu 学习路径数据
+# =============================================================================
+#  这是本项目的核心资产。每一节是一个「节点」，能独立完成、独立验收。
+#
+#  requires 字段就是依赖图的边 —— 一个节点可以有多个前置，
+#  也能解锁多个后继。改这份文件就能改整条路线，不需要动代码。
+#
+#  字段说明：
+#    id          英文唯一标识，供依赖引用
+#    title       中文显示名
+#    stage       所属阶段，用于分组
+#    requires    前置节点 id 列表（可为空 = 入口节点）
+#    skills      要掌握的知识点
+#    acceptance  验收标准，逐条自评，全部通过即合格 —— 不设标准答案
+#    project     配套参考项目
+#    pitfalls    常见坑（真实踩过的，不是教程里抄的）
+#    resources   延伸资源（只放链接，不转载内容）
+#
+#  改完请运行： agtstu check
+# =============================================================================
+
+nodes:
+
+  # ===========================================================================
+  #  起步：把环境跑起来
+  # ===========================================================================
+
+  - id: py_env
+    title: 环境搭建与运行 Python
+    stage: 阶段一 · Python 与工程基础
+    requires: []
+    skills:
+      - 安装 Python 并确认版本
+      - 从命令行运行 .py 文件
+      - 认识 pip 与 PATH 的作用
+      - 在编辑器里正确指定解释器
+    acceptance:
+      - 终端里输入 python --version 能看到版本号
+      - 能用 python 文件名.py 跑通一个脚本
+      - 能说清「解释器」与「虚拟环境」是什么关系
+    project:
+      name: 第一个脚本
+      note: 写一个脚本，打印当前 Python 版本和解释器所在路径
+    pitfalls:
+      - 装完 Python 但终端提示「不是内部或外部命令」—— PATH 没配好
+      - 编辑器里选了一个已不存在的解释器，报「解释器无效」—— 要指向真实的 python.exe
+      - 电脑上装了多个 Python 时，不加区分地用 python 命令可能跑到了另一个版本上
+    resources:
+      - title: Python 官方下载页
+        url: https://www.python.org/downloads/
+        note: 安装时务必勾选 Add Python to PATH
+
+  - id: eng_git
+    title: Git 与版本控制基础
+    stage: 阶段一 · Python 与工程基础
+    requires: []
+    skills:
+      - 仓库、提交、远程三个概念的区别
+      - git init / add / commit / push 四步流程
+      - .gitignore 的作用与写法
+      - 看懂 git status 的输出
+    acceptance:
+      - 能把一个本地目录变成 Git 仓库并完成首次提交
+      - 能说清「提交之后代码存在哪」
+      - 能写出一个 .gitignore 把虚拟环境排除掉
+    project:
+      name: 把自己的练习目录纳入版本控制
+      note: 给学习目录初始化 Git，按内容分批提交已有练习
+    pitfalls:
+      - 以为 commit 就等于上传了 —— 其实只存在本机的 .git 目录里，push 才到远程
+      - 忘了写 .gitignore，把几百 MB 的虚拟环境整个提交进去，仓库直接膨胀
+      - 在平台上建仓库时勾选了自动生成 README，本地推送时冲突报 fetch first
+      - Gitee 的 HTTPS 推送不接受登录密码，只接受「私人访问令牌」
+      - IDE 的 deployment.xml、dataSources.xml 里可能存有账号密码，必须忽略 .idea 目录
+    resources:
+      - title: Git 官方文档
+        url: https://git-scm.com/book/zh/v2
+        note: 前三章读完就够用
+
+  # ===========================================================================
+  #  语言基础：从「能写」到「写对」
+  # ===========================================================================
+
+  - id: py_basic
+    title: 变量与基本类型
+    stage: 阶段一 · Python 与工程基础
+    requires: [py_env]
+    skills:
+      - 变量与赋值
+      - int / float / str / bool 四种基本类型
+      - 类型转换与 type() 查看类型
+      - input() 与 print()
+      - f-string 格式化
+    acceptance:
+      - 能写一个接收输入、做转换、输出结果的小脚本
+      - 能解释 input() 返回的是什么类型
+      - 能说出 / 与 // 的区别
+    project:
+      name: 温度转换器
+      note: 输入摄氏度输出华氏度，再支持反向转换
+    pitfalls:
+      - input() 拿到的一律是字符串，不转换就直接做算术会报错或算出奇怪结果
+      - / 是浮点除法，// 才是整除；想取整别用 /
+      - 浮点数有精度问题，0.1 + 0.2 不等于 0.3，比较时要注意
+      - 变量名用中文能跑，但工程上不要这么写
+
+  - id: py_str
+    title: 字符串处理
+    stage: 阶段一 · Python 与工程基础
+    requires: [py_basic]
+    skills:
+      - 索引与切片
+      - 常用方法：split / join / strip / replace / startswith
+      - f-string 与格式化
+      - 转义字符与原始字符串
+    acceptance:
+      - 能从一段文本里提取需要的信息
+      - 能说清切片 [a:b] 的取值边界（含头不含尾）
+      - 能处理带空格、换行的脏数据
+    project:
+      name: 文本统计器
+      note: 统计一段文本的词频、最长单词、平均词长
+    pitfalls:
+      - 切片是「含头不含尾」，[0:3] 取的是前 3 个字符不是 4 个
+      - 字符串是不可变的，所有「修改」方法都返回新字符串，原串不变
+      - Windows 和 Linux 的回车符不同，读文件时 strip() 比裸比较更稳
+
+  - id: py_container
+    title: 数据容器（列表 / 元组 / 字典 / 集合）
+    stage: 阶段一 · Python 与工程基础
+    requires: [py_basic]
+    skills:
+      - list 的增删改查与排序
+      - tuple 的不可变性
+      - dict 的键值访问与遍历
+      - set 的去重与集合运算
+      - 四者之间的相互转换
+    acceptance:
+      - 能按场景选对容器：要顺序用 list，要查表用 dict，要去重用 set
+      - 能遍历字典并同时拿到键和值
+      - 能用列表推导式代替简单的 for 循环
+    project:
+      name: 通讯录（内存版）
+      note: 用 dict 存联系人，支持增删改查，不做持久化
+    pitfalls:
+      - 遍历列表时删除元素会漏掉元素 —— 要遍历副本或倒序删
+      - dict 的键必须可哈希，list 不能当键
+      - list 赋值是引用不是拷贝，b = a 之后改 b 会连 a 一起改
+      - set 是无序的，不要依赖它的输出顺序
+
+  - id: py_flow
+    title: 条件与循环
+    stage: 阶段一 · Python 与工程基础
+    requires: [py_basic]
+    skills:
+      - if / elif / else 与缩进规则
+      - for 与 while 的选用
+      - break / continue / else 子句
+      - range 与 enumerate / zip
+    acceptance:
+      - 能写出嵌套两层以内的判断逻辑
+      - 能说清 for...else 的 else 什么时候执行
+      - 能用 enumerate 代替手动维护下标
+    project:
+      name: 命令行猜数字
+      note: 随机生成一个数，循环猜测并给出大小提示，猜中后统计次数
+    pitfalls:
+      - Python 用缩进划分代码块，混用 Tab 和空格会直接报错
+      - while 忘了让条件变化会死循环 —— Ctrl+C 可以中断
+      - 循环里改了列表长度，结果和预期完全不同
+
+  # ===========================================================================
+  #  组织代码：从「一个文件」到「一个项目」
+  # ===========================================================================
+
+  - id: py_func
+    title: 函数
+    stage: 阶段一 · Python 与工程基础
+    requires: [py_flow, py_container]
+    skills:
+      - 定义与调用、参数与返回值
+      - 位置参数、关键字参数、默认值
+      - 可变参数 *args / **kwargs
+      - 作用域与 LEGB 规则
+      - 类型注解写法
+    acceptance:
+      - 能把一段重复代码抽成函数
+      - 能一眼看出一个函数该不该拆（超过一屏就该拆）
+      - 能写出带类型注解和 docstring 的函数
+    project:
+      name: 把猜数字改造成函数版
+      note: 拆成生成答案、判断猜测、统计次数几个函数，主流程只做编排
+    pitfalls:
+      - 默认参数不要用可变对象（如 def f(x=[])），会跨调用累积
+      - 函数里改全局变量要声明 global，但更好的做法是不要改
+      - 返回多个值其实返回的是一个元组，接收时要对应
+      - 函数名要有动词，func1 / test 这种名字一周后自己都看不懂
+
+  - id: py_module
+    title: 模块与包
+    stage: 阶段一 · Python 与工程基础
+    requires: [py_func]
+    skills:
+      - import 的几种写法
+      - __name__ == "__main__" 的作用
+      - 包与 __init__.py
+      - 标准库常用模块：os / pathlib / json / datetime
+    acceptance:
+      - 能把自己的代码拆成多个文件互相引用
+      - 能解释为什么脚本里要写 if __name__ == "__main__"
+      - 知道标准库在哪里查
+    project:
+      name: 拆分成多文件的小工具
+      note: 把文本统计器拆成 utils 模块 + 主入口文件
+    pitfalls:
+      - 模块名和标准库重名（比如自己写 json.py）会导致诡异的导入错误
+      - 直接运行包内模块时相对导入会失败，要用 python -m 包.模块
+      - 修改了模块但程序没变化，多半是被 .pyc 缓存或没重启解释器
+
+  - id: py_file
+    title: 文件读写
+    stage: 阶段一 · Python 与工程基础
+    requires: [py_str, py_func]
+    skills:
+      - open 与 with 上下文管理器
+      - 文本与二进制的区别
+      - 编码问题与 encoding 参数
+      - pathlib 处理路径
+    acceptance:
+      - 能用 with 读写文件而不手动 close
+      - 遇到中文乱码能自己定位是编码问题
+      - 能用 pathlib 拼接跨平台路径
+    project:
+      name: 词频统计（落盘版）
+      note: 读取一个文本文件，统计词频，结果写成 CSV
+    pitfalls:
+      - Windows 上默认编码是 GBK，读 UTF-8 文件不加 encoding="utf-8" 会乱码
+      - 忘记 close 会导致文件被占用 —— 用 with 就不用操心
+      - 写文件的路径不存在会报错，父目录要提前创建
+      - 路径别用字符串硬拼，Windows 用反斜杠、Linux 用正斜杠，用 pathlib 最稳
+
+  - id: py_error
+    title: 异常处理
+    stage: 阶段一 · Python 与工程基础
+    requires: [py_func]
+    skills:
+      - try / except / else / finally
+      - 常见异常类型：ValueError / KeyError / FileNotFoundError
+      - 主动抛出 raise
+      - 自定义异常
+    acceptance:
+      - 能预判代码可能在哪里出错并加上处理
+      - 能说清 except Exception 一把抓为什么不好
+      - 报错时能自己读懂 traceback 的最后一行
+    project:
+      name: 给命令行工具加健壮性
+      note: 处理用户输入非法、文件不存在、类型转换失败三种情况
+    pitfalls:
+      - 用 except: 吞掉所有异常，出错了还静默继续，排查时毫无线索
+      - 异常被吞掉后程序行为诡异，先 print 出来再决定怎么处理
+      - 读 traceback 要从最后一行往上读，最后一行才是真正的错误原因
+      - 自己抛异常时带上有用的信息，只写 raise Exception() 等于没写
+
+  - id: eng_venv
+    title: 虚拟环境与依赖管理
+    stage: 阶段一 · Python 与工程基础
+    requires: [py_env, py_module]
+    skills:
+      - 虚拟环境解决什么问题
+      - venv 的创建与激活
+      - pip install / freeze 与 requirements.txt
+      - pyproject.toml 的定位
+    acceptance:
+      - 能为一个项目建立独立虚拟环境并在其中装包
+      - 能说清「为什么不能所有项目共用一个环境」
+      - 能用 requirements.txt 让别人复现你的环境
+    project:
+      name: 给自己的项目建环境
+      note: 建虚拟环境、装一个第三方库、导出依赖清单、写进 README
+    pitfalls:
+      - 忘记激活虚拟环境，包装到了全局 Python 上，换个项目就找不到
+      - 虚拟环境目录一定要写进 .gitignore，否则仓库瞬间膨胀
+      - 直接在项目里堆 pip install 而不记录依赖，换台机器就复现不出来
+      - Python 建虚拟环境时会自动在里面放一个内容为 * 的 .gitignore，所以它本来就会被 Git 忽略
+
+  - id: eng_struct
+    title: 项目结构组织
+    stage: 阶段一 · Python 与工程基础
+    requires: [py_module, eng_venv]
+    skills:
+      - 一个 Python 项目该有哪些文件
+      - 包布局与扁平布局的区别
+      - README / LICENSE / 依赖声明 / 测试目录的位置
+      - 配置与代码分离（环境变量）
+    acceptance:
+      - 能从零搭出一个含「包 + 测试 + README + 依赖声明」的项目骨架
+      - 能说清每个顶层文件是干什么用的
+      - 别人 clone 下来能按 README 跑起来
+    project:
+      name: 按规范重建自己的练习项目
+      note: 把散落的练习脚本整理成一个有结构的项目
+    pitfalls:
+      - 所有代码堆在根目录，超过 5 个文件就找不到东西了
+      - 密钥、API Key 直接写在代码里 —— 要用环境变量，且 .env 必须进 .gitignore
+      - 测试代码和业务代码混在一起，后来自己都分不清哪个是哪个
+      - README 只写「这是我的项目」，别人完全不知道怎么跑
+
+  # ===========================================================================
+  #  工程入门：连上外部世界
+  # ===========================================================================
+
+  - id: py_json
+    title: JSON 与数据交换
+    stage: 阶段一 · Python 与工程基础
+    requires: [py_container, py_file]
+    skills:
+      - JSON 与 Python 数据结构的对应关系
+      - json.loads / dumps 与 load / dump 的区别
+      - 嵌套结构与安全取值
+      - 中文编码处理
+    acceptance:
+      - 能把 JSON 字符串解析成 dict 并取出嵌套字段
+      - 能区分「读文件」和「解析字符串」两组函数
+      - 能处理字段缺失的情况而不崩溃
+    project:
+      name: 解析一份公开数据
+      note: 读一个 JSON 文件，提取需要的字段，输出成可读的表格
+    pitfalls:
+      - json.load 读文件、json.loads 解析字符串，用混了会报奇怪的错
+      - JSON 的 true/false/null 映射到 Python 是 True/False/None，手写时容易混
+      - 直接 result["a"]["b"]["c"] 取值，中间缺一层就抛 KeyError，用 .get() 更稳
+      - 写中文时 ensure_ascii=False 才不会变成一串转义字符
+
+  - id: eng_http
+    title: HTTP 与调用公开 API
+    stage: 阶段一 · Python 与工程基础
+    requires: [py_json, eng_venv, py_error]
+    skills:
+      - HTTP 请求与响应、状态码含义
+      - GET / POST 的区别
+      - 用 httpx 或 requests 发请求
+      - 超时、重试与错误处理
+      - 用环境变量存放密钥
+    acceptance:
+      - 能调用一个公开 API 并把结果解析出来
+      - 能处理超时、非 200 响应、字段缺失三种情况
+      - API Key 不写进代码，而是从环境变量读
+    project:
+      name: 命令行天气查询
+      note: 调用公开天气 API，输入城市名输出当天天气，处理城市不存在的情况
+    pitfalls:
+      - 不设 timeout，网络不通时程序会一直挂着
+      - 拿到的状态码不是 200 就直接取数据，结果解析出奇怪的东西
+      - 密钥硬编码在代码里然后推到了公开仓库 —— 要立刻吊销并改用环境变量
+      - 国内访问部分境外 API 不稳定，要么配代理要么换国内数据源
+
+  - id: eng_publish
+    title: 把项目发布到 GitHub / Gitee
+    stage: 阶段一 · Python 与工程基础
+    requires: [eng_git, eng_struct]
+    skills:
+      - 创建远程仓库并关联本地
+      - 推送与拉取
+      - 写一份别人能跑通的 README
+      - 选择开源许可证
+      - 打标签与发布 Release
+    acceptance:
+      - 自己的练习项目能在网上被访问到
+      - 别人按 README 能装能跑
+      - 仓库里有明确的 LICENSE 文件
+    project:
+      name: 发布第一个公开仓库
+      note: 把整理好的练习项目发布到 GitHub，并同步一份到 Gitee
+    pitfalls:
+      - 建远程仓库时勾选了初始化选项，本地推送冲突；要么强制推送要么先拉取合并
+      - 推送前务必检查有没有把密钥、token、账号密码提交上去 —— 提交历史里很难彻底清除
+      - 只推代码不写 README，别人点进来完全不知道这是干什么的
+      - 国内访问 GitHub 不稳定，git 要单独配代理，浏览器能上不等于 git 能上
+    resources:
+      - title: 如何选择开源许可证
+        url: https://choosealicense.com/
+        note: MIT 最宽松，适合希望被广泛使用的项目
