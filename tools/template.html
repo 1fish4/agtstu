@@ -1,0 +1,1022 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AgtStu · 把学习路径当作依赖图来管理</title>
+<meta name="description" content="AgtStu 是一个开源学习路径工具：从 Python 基础到 Agent 开发，每个节点都带验收标准和真实踩坑记录。路径不是清单，是一张网。">
+<style>
+  :root {
+    --bg:        #FAF8F4;
+    --card:      #FFFFFF;
+    --ink:       #1B2430;
+    --ink2:      #56616F;
+    --ink3:      #8A94A2;
+    --line:      #E7E2D8;
+    --line2:     #F1EDE5;
+    --accent:    #2E6F8E;
+    --accent2:   #4A9BBF;
+    --soft:      #E7F1F6;
+    --done:      #4E9A72;
+    --doneSoft:  #E6F3EC;
+    --lock:      #C6C0B6;
+    --warn:      #B8703F;
+    --warnSoft:  #FBF1E6;
+    --shadow:    0 1px 2px rgba(27,36,48,.04), 0 6px 20px rgba(27,36,48,.05);
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+            "Hiragino Sans GB", "Microsoft YaHei", "Source Han Sans SC",
+            "Noto Sans CJK SC", sans-serif;
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Consolas,
+            "Liberation Mono", Menlo, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg:       #14181D;
+      --card:     #1B2027;
+      --ink:      #E9ECF1;
+      --ink2:     #A7B0BB;
+      --ink3:     #6F7986;
+      --line:     #2A3138;
+      --line2:    #222930;
+      --accent:   #6FB3D2;
+      --accent2:  #8CC9E4;
+      --soft:     #1E2C35;
+      --done:     #6FBF95;
+      --doneSoft: #1B2A23;
+      --lock:     #4B535C;
+      --warn:     #D9976A;
+      --warnSoft: #2B2118;
+      --shadow:   0 1px 2px rgba(0,0,0,.3), 0 6px 20px rgba(0,0,0,.25);
+    }
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 15px;
+    line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
+  }
+  code, .mono { font-family: var(--mono); }
+
+  /* ---------- 页头 ---------- */
+  .hero {
+    position: relative;
+    padding: 76px 24px 60px;
+    text-align: center;
+    overflow: hidden;
+    border-bottom: 1px solid var(--line);
+    background:
+      radial-gradient(900px 340px at 50% -160px, var(--soft), transparent 70%);
+  }
+  .hero .tag {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--accent);
+    background: var(--soft);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 5px 14px;
+    margin-bottom: 22px;
+  }
+  .hero h1 {
+    margin: 0;
+    font-size: clamp(42px, 7vw, 68px);
+    line-height: 1.05;
+    letter-spacing: -.02em;
+    font-weight: 700;
+  }
+  .hero h1 em {
+    font-style: normal;
+    color: var(--accent);
+  }
+  .hero .lead {
+    margin: 20px auto 0;
+    max-width: 640px;
+    font-size: clamp(16px, 2.2vw, 19px);
+    color: var(--ink2);
+  }
+  .hero .lead strong { color: var(--ink); font-weight: 600; }
+  .stats {
+    margin: 34px auto 0;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+  }
+  .stat {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 9px 16px;
+    font-size: 13px;
+    color: var(--ink2);
+    box-shadow: var(--shadow);
+  }
+  .stat b {
+    font-family: var(--mono);
+    color: var(--ink);
+    font-size: 15px;
+    margin-right: 5px;
+  }
+
+  /* ---------- 版心 ---------- */
+  .wrap {
+    max-width: 1120px;
+    margin: 0 auto;
+    padding: 56px 24px 80px;
+  }
+  section { margin-bottom: 64px; }
+  .sec-head { margin-bottom: 24px; }
+  .sec-head h2 {
+    margin: 0 0 8px;
+    font-size: 26px;
+    letter-spacing: -.01em;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .sec-head h2::before {
+    content: "";
+    width: 26px;
+    height: 4px;
+    border-radius: 2px;
+    background: var(--accent);
+    flex: none;
+  }
+  .sec-head p {
+    margin: 0;
+    color: var(--ink2);
+    max-width: 720px;
+  }
+
+  /* ---------- 卡片 ---------- */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    box-shadow: var(--shadow);
+  }
+
+  /* ---------- 依赖图 ---------- */
+  .board { display: grid; grid-template-columns: minmax(0,1fr) 372px; gap: 20px; }
+  .canvas {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    box-shadow: var(--shadow);
+    padding: 8px;
+    overflow-x: auto;
+  }
+  #graph { display: block; width: 100%; min-width: 640px; height: auto; margin: 0 auto; }
+
+  .edge {
+    fill: none;
+    stroke: var(--line);
+    stroke-width: 1.6;
+    stroke-linejoin: round;
+    stroke-linecap: round;
+    transition: stroke .18s, stroke-width .18s, opacity .18s;
+  }
+  .edge.e-done { stroke: var(--done); opacity: .55; }
+  .edge.e-rel  { stroke: var(--accent2); stroke-width: 2.4; opacity: 1; }
+  .edge.e-dim  { opacity: .18; }
+
+  .node { cursor: pointer; }
+  .node rect {
+    fill: var(--card);
+    stroke: var(--line);
+    stroke-width: 1.6;
+    transition: stroke .18s, fill .18s;
+  }
+  .node .dot { fill: var(--lock); transition: fill .18s; }
+  .node text { text-anchor: middle; font-family: var(--sans); }
+  .node .t1, .node .t2 { fill: var(--ink3); font-size: 12.5px; font-weight: 600; }
+  .node .nid { fill: var(--ink3); font-family: var(--mono); font-size: 9.5px; opacity: .8; }
+
+  .node.s-open rect   { stroke: var(--accent2); }
+  .node.s-open .t1, .node.s-open .t2 { fill: var(--ink); }
+  .node.s-open .dot   { fill: var(--accent2); }
+
+  .node.s-done rect   { stroke: var(--done); fill: var(--doneSoft); }
+  .node.s-done .t1, .node.s-done .t2 { fill: var(--done); }
+  .node.s-done .dot   { fill: var(--done); }
+
+  .node.is-sel rect {
+    stroke: var(--accent);
+    stroke-width: 2.6;
+    filter: drop-shadow(0 3px 10px rgba(46,111,142,.22));
+  }
+  .node:hover rect { stroke: var(--accent2); }
+  .node.is-dim { opacity: .38; }
+
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 18px;
+    margin-top: 16px;
+    font-size: 13px;
+    color: var(--ink2);
+  }
+  .legend span { display: inline-flex; align-items: center; gap: 7px; }
+  .legend i {
+    width: 10px; height: 10px; border-radius: 50%;
+    display: inline-block; flex: none;
+  }
+
+  /* ---------- 侧栏 ---------- */
+  .side { min-width: 0; }
+  .side .card { padding: 20px 22px; }
+
+  .empty {
+    color: var(--ink3);
+    font-size: 14px;
+    text-align: center;
+    padding: 46px 12px;
+  }
+  .d-head { border-bottom: 1px solid var(--line2); padding-bottom: 14px; margin-bottom: 16px; }
+  .d-stage {
+    font-size: 11.5px;
+    font-family: var(--mono);
+    color: var(--accent);
+    background: var(--soft);
+    border-radius: 5px;
+    padding: 2px 8px;
+    display: inline-block;
+    margin-bottom: 8px;
+  }
+  .d-title { margin: 0 0 6px; font-size: 19px; line-height: 1.4; }
+  .d-id { font-size: 12px; color: var(--ink3); }
+
+  .d-state {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 13px; margin-bottom: 16px;
+  }
+  .pill {
+    border-radius: 999px; padding: 2px 11px; font-size: 12px;
+    border: 1px solid var(--line); color: var(--ink2);
+  }
+  .pill.p-open { color: var(--accent); border-color: var(--accent2); background: var(--soft); }
+  .pill.p-done { color: var(--done); border-color: var(--done); background: var(--doneSoft); }
+  .pill.p-lock { color: var(--ink3); }
+
+  .field { margin-bottom: 16px; }
+  .field > .k {
+    font-size: 12px; font-weight: 700; letter-spacing: .04em;
+    color: var(--ink3); margin-bottom: 7px;
+  }
+  .field ul { margin: 0; padding-left: 0; list-style: none; }
+  .field li {
+    font-size: 13.5px; color: var(--ink2); line-height: 1.62;
+    padding-left: 16px; position: relative; margin-bottom: 5px;
+  }
+  .field li::before {
+    content: ""; position: absolute; left: 3px; top: 9px;
+    width: 4px; height: 4px; border-radius: 50%; background: var(--line);
+  }
+  .field.pit li::before { background: var(--warn); }
+  .field.pit li { color: var(--ink); }
+  .field.acc li::before {
+    background: transparent;
+    border: 1.4px solid var(--lock);
+    width: 8px; height: 8px;
+    border-radius: 3px;
+    top: 6px; left: 1px;
+  }
+
+  .proj {
+    background: var(--line2); border-radius: 10px; padding: 12px 14px;
+  }
+  .proj b { display: block; font-size: 14px; margin-bottom: 3px; }
+  .proj span { font-size: 13px; color: var(--ink2); }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip {
+    font-family: var(--mono); font-size: 11.5px;
+    border: 1px solid var(--line); border-radius: 6px;
+    padding: 2px 8px; color: var(--ink2); background: var(--card);
+    cursor: pointer;
+  }
+  .chip:hover { border-color: var(--accent2); color: var(--accent); }
+  .chip.miss { color: var(--warn); border-color: var(--warn); }
+
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .res { font-size: 13px; margin-bottom: 6px; }
+  .res span { color: var(--ink3); }
+
+  .btn {
+    font-family: var(--sans); font-size: 13.5px; font-weight: 600;
+    border-radius: 9px; padding: 9px 16px; cursor: pointer;
+    border: 1px solid var(--accent); background: var(--accent); color: #fff;
+    transition: opacity .15s;
+  }
+  .btn:hover { opacity: .88; }
+  .btn.ghost {
+    background: transparent; color: var(--ink2); border-color: var(--line);
+  }
+  .btn.ghost:hover { border-color: var(--ink3); }
+  .d-actions { margin-top: 18px; display: flex; gap: 8px; }
+
+  /* ---------- 下半区 ---------- */
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .grid2 .card { padding: 22px 24px; }
+  .grid2 h3 { margin: 0 0 4px; font-size: 17px; }
+  .grid2 .sub { color: var(--ink3); font-size: 13px; margin-bottom: 18px; }
+
+  .bar {
+    height: 9px; border-radius: 999px; background: var(--line2);
+    overflow: hidden; margin: 6px 0 18px;
+  }
+  .bar i {
+    display: block; height: 100%; width: 0;
+    background: var(--done); border-radius: 999px;
+    transition: width .35s ease;
+  }
+  .krow {
+    display: flex; justify-content: space-between;
+    font-size: 13.5px; margin-bottom: 4px; color: var(--ink2);
+  }
+  .krow b { font-family: var(--mono); color: var(--ink); }
+
+  .blocktitle {
+    font-size: 12px; font-weight: 700; color: var(--ink3);
+    letter-spacing: .04em; margin: 18px 0 9px;
+  }
+  .openlist { min-height: 30px; }
+  .lockedlist { font-size: 13px; color: var(--ink2); }
+  .lockedlist div { margin-bottom: 5px; }
+  .lockedlist code { font-size: 11.5px; color: var(--ink3); }
+  .none { color: var(--ink3); font-size: 13px; }
+
+  select {
+    font-family: var(--sans); font-size: 14px;
+    padding: 8px 12px; border-radius: 9px;
+    border: 1px solid var(--line); background: var(--card); color: var(--ink);
+    width: 100%; margin-bottom: 16px;
+  }
+  ol.plan { margin: 0; padding-left: 0; list-style: none; counter-reset: p; }
+  ol.plan li {
+    counter-increment: p;
+    display: flex; align-items: baseline; gap: 10px;
+    font-size: 13.5px; padding: 7px 0;
+    border-bottom: 1px dashed var(--line2);
+  }
+  ol.plan li::before {
+    content: counter(p);
+    font-family: var(--mono); font-size: 11px; color: var(--ink3);
+    min-width: 18px; text-align: right;
+  }
+  ol.plan li:last-child { border-bottom: 0; }
+  ol.plan li.target { color: var(--accent); font-weight: 600; }
+  ol.plan li code { font-size: 11.5px; color: var(--ink3); margin-left: auto; }
+  ol.plan li.target code { color: var(--accent); }
+
+  /* ---------- 特性 ---------- */
+  .feat { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+  .feat .card { padding: 24px; }
+  .feat .num {
+    font-family: var(--mono); font-size: 12px; color: var(--accent);
+    letter-spacing: .1em; margin-bottom: 10px;
+  }
+  .feat h3 { margin: 0 0 10px; font-size: 17px; }
+  .feat p { margin: 0; font-size: 13.8px; color: var(--ink2); }
+  .feat p + p { margin-top: 8px; }
+  .feat code {
+    font-size: 12.5px; background: var(--line2);
+    padding: 1px 5px; border-radius: 4px;
+  }
+
+  /* ---------- 页脚 ---------- */
+  footer {
+    border-top: 1px solid var(--line);
+    padding: 36px 24px 56px;
+    text-align: center;
+    color: var(--ink3);
+    font-size: 13px;
+  }
+  footer .links { margin-bottom: 12px; display: flex; justify-content: center; gap: 22px; flex-wrap: wrap; }
+  footer .links a { font-weight: 600; }
+  footer .fine { font-family: var(--mono); font-size: 11.5px; line-height: 1.9; }
+
+  @media (max-width: 980px) {
+    .board { grid-template-columns: 1fr; }
+    .grid2 { grid-template-columns: 1fr; }
+    .feat  { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="tag">Agent + Study</div>
+  <h1>Agt<em>Stu</em></h1>
+  <p class="lead">
+    把学习路径当作<strong>依赖图</strong>来管理的开源工具 ——
+    从 Python 基础到 Agent 开发。路径不是一条线，<strong>是一张网</strong>。
+  </p>
+  <div class="stats" id="stats"></div>
+</header>
+
+<main class="wrap">
+
+  <section>
+    <div class="sec-head">
+      <h2>学习路径依赖图</h2>
+      <p>
+        每个方块是一个可以独立完成、独立验收的学习单元。连线表示「必须先学会前者」。
+        点任意节点查看它的知识点、验收标准与常见坑；在右侧把它标为完成后，图会立刻重算你接下来能学什么。
+      </p>
+    </div>
+
+    <div class="board">
+      <div>
+        <div class="canvas">
+          <svg id="graph" role="img" aria-label="学习路径依赖图"></svg>
+        </div>
+        <div class="legend">
+          <span><i style="background:var(--accent2)"></i>现在可以学</span>
+          <span><i style="background:var(--done)"></i>已完成</span>
+          <span><i style="background:var(--lock)"></i>还锁着（前置未完成）</span>
+          <span style="color:var(--ink3)">提示：进度存在你自己的浏览器里，不会上传</span>
+        </div>
+      </div>
+
+      <aside class="side">
+        <div class="card" id="panel">
+          <div class="empty">点左侧任一节点<br>查看它的详细内容</div>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <section>
+    <div class="grid2">
+      <div class="card">
+        <h3>我的进度</h3>
+        <div class="sub" id="prog-sub">还没有标记任何节点</div>
+        <div class="krow"><span>完成度</span><span><b id="prog-num">0 / 0</b></span></div>
+        <div class="bar"><i id="prog-bar"></i></div>
+
+        <div class="blocktitle">现在可以学</div>
+        <div class="chips openlist" id="open-list"></div>
+
+        <div class="blocktitle">还锁着</div>
+        <div class="lockedlist" id="lock-list"></div>
+
+        <div style="margin-top:20px">
+          <button class="btn ghost" id="reset">重置进度</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>目标路径规划</h3>
+        <div class="sub">选一个目标，算出从当前位置到它还需要按什么顺序学</div>
+        <select id="target"></select>
+        <ol class="plan" id="plan"></ol>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <h2>为什么需要它</h2>
+    </div>
+    <div class="feat">
+      <div class="card">
+        <div class="num">01</div>
+        <h3>路径是图，不是清单</h3>
+        <p>
+          一个知识点往往同时是多个知识点的前置。<code>HTTP 与调用 API</code>
+          就需要 JSON、虚拟环境、异常处理三样同时具备 —— 用线性清单表达不了这种汇聚关系。
+        </p>
+        <p>
+          引擎会校验循环依赖和孤立节点。内容长到几百个节点时，<strong>手工维护必然出错</strong>。
+        </p>
+      </div>
+      <div class="card">
+        <div class="num">02</div>
+        <h3>每个节点都带真实踩坑记录</h3>
+        <p>
+          现成的项目列表都只给你一个链接，剩下的靠悟。这里除了链接，还写清楚
+          <strong>必须先会哪几样、真正卡人的地方在哪、当初怎么绕过去的</strong>。
+        </p>
+        <p>项目列表可以复制，踩坑记录不能。</p>
+      </div>
+      <div class="card">
+        <div class="num">03</div>
+        <h3>不设标准答案，双平台可用</h3>
+        <p>
+          每个节点给一组<strong>验收标准</strong>，逐条自评，全部通过即合格。
+          做到什么程度算够，比追求完美更重要。
+        </p>
+        <p>成果可以提交到 GitHub 或 Gitee，两条路都通。</p>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="links">
+    <a id="gh" href="https://github.com/1fish4/agtstu" target="_blank" rel="noopener">GitHub</a>
+    <a id="gt" href="https://gitee.com/not-even-xianyu-can-handle-it/agtstu" target="_blank" rel="noopener">Gitee</a>
+    <a href="https://github.com/1fish4/agtstu/blob/main/README.md" target="_blank" rel="noopener">README</a>
+    <a href="https://github.com/1fish4/agtstu/blob/main/CONTRIBUTING.md" target="_blank" rel="noopener">参与贡献</a>
+  </div>
+  <div>MIT License · 数据与引擎同源，本页由 <code>path.yaml</code> 自动生成</div>
+  <div class="fine" id="fine"></div>
+</footer>
+
+<script id="path-data" type="application/json">/*__DATA__*/null</script>
+
+<script>
+(function () {
+  "use strict";
+
+  var DATA = JSON.parse(document.getElementById("path-data").textContent.trim());
+  if (!DATA) { return; }
+
+  var NODES = DATA.nodes;
+  var BY_ID = {};
+  NODES.forEach(function (n) { BY_ID[n.id] = n; });
+
+  var STORAGE = "agtstu.progress.v1";
+  var done = loadDone();
+  var selected = null;
+
+  /* ---------------- 进度存取 ---------------- */
+  function loadDone() {
+    try {
+      var raw = window.localStorage.getItem(STORAGE);
+      var arr = raw ? JSON.parse(raw) : [];
+      return new Set(arr.filter(function (id) { return BY_ID[id]; }));
+    } catch (e) {
+      return new Set();
+    }
+  }
+  function saveDone() {
+    try {
+      window.localStorage.setItem(STORAGE, JSON.stringify(Array.from(done)));
+    } catch (e) { /* 隐私模式下忽略 */ }
+  }
+  function statusOf(id) {
+    if (done.has(id)) { return "done"; }
+    var n = BY_ID[id];
+    return n.requires.every(function (d) { return done.has(d); }) ? "open" : "locked";
+  }
+  function missingOf(id) {
+    return BY_ID[id].requires.filter(function (d) { return !done.has(d); });
+  }
+
+  /* ---------------- 文本度量与换行 ----------------
+     终端/SVG 里中文字符占两列，直接用字符数估宽会严重偏窄。
+     这里按「全角算 1 个字宽、半角算 0.62」估算。 */
+  var FULL = /[\u1100-\u115F\u2E80-\uA4CF\uAC00-\uD7A3\uF900-\uFAFF\uFE30-\uFE4F\uFF00-\uFF60\uFFE0-\uFFE6]/;
+  function textWidth(s, size) {
+    var w = 0;
+    for (var i = 0; i < s.length; i++) {
+      w += FULL.test(s[i]) ? size : size * 0.62;
+    }
+    return w;
+  }
+  function wrap(text, size, maxW, maxLines) {
+    var chars = Array.from(text);
+    var lines = [];
+    var cur = "";
+    var i = 0;
+    for (; i < chars.length; i++) {
+      var ch = chars[i];
+      if (cur && textWidth(cur + ch, size) > maxW) {
+        lines.push(cur);
+        cur = ch;
+        if (lines.length >= maxLines) { i++; break; }
+      } else {
+        cur += ch;
+      }
+    }
+    var truncated = i < chars.length;
+    if (cur && lines.length < maxLines) { lines.push(cur); }
+    if (truncated && lines.length) {
+      var last = lines[lines.length - 1];
+      lines[lines.length - 1] = last.slice(0, -1) + "…";
+    }
+    return lines;
+  }
+  function esc(s) {
+    return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;")
+                    .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  }
+
+  /* ---------------- 布局 ---------------- */
+  var NODE_W = 196, NODE_H = 58, GAP_X = 22, GAP_Y = 48, PAD = 30, MIN_W = 620;
+  // 左右两侧各留出一段"绕行通道"：跨多层的依赖边从这里走，
+  // 否则曲线会直接穿过中间层的方块。
+  var SIDE = 40;
+  var pos = {};
+
+  function layout() {
+    var byLevel = {};
+    var maxLevel = 0;
+    NODES.forEach(function (n) {
+      (byLevel[n.level] = byLevel[n.level] || []).push(n);
+      if (n.level > maxLevel) { maxLevel = n.level; }
+    });
+    var keys = Object.keys(byLevel);
+    keys.forEach(function (lv) {
+      byLevel[lv].sort(function (a, b) { return a.rank - b.rank; });
+    });
+
+    // 画布宽度由**最宽的那一层**决定，而不是写死一个固定值。
+    // 写死的话，节点分布窄的时候整张图会被容器按比例缩小，字也跟着变小。
+    var widest = 0;
+    keys.forEach(function (lv) {
+      var w = byLevel[lv].length * NODE_W + (byLevel[lv].length - 1) * GAP_X;
+      if (w > widest) { widest = w; }
+    });
+    var canvasW = Math.max(widest + SIDE * 2, MIN_W);
+
+    keys.forEach(function (lv) {
+      var list = byLevel[lv];
+      var layerW = list.length * NODE_W + (list.length - 1) * GAP_X;
+      var x = (canvasW - layerW) / 2;
+      var y = PAD + Number(lv) * (NODE_H + GAP_Y);
+      list.forEach(function (n) {
+        pos[n.id] = { x: x, y: y, cx: x + NODE_W / 2 };
+        x += NODE_W + GAP_X;
+      });
+    });
+
+    var h = PAD * 2 + (maxLevel + 1) * NODE_H + maxLevel * GAP_Y;
+    return { width: canvasW, height: h };
+  }
+
+  /* ---------------- 绘制依赖图 ---------------- */
+  var svg = document.getElementById("graph");
+
+  function render() {
+    var size = layout();
+    svg.setAttribute("viewBox", "0 0 " + size.width + " " + size.height);
+
+    var neighbours = {};
+    if (selected) {
+      neighbours[selected] = true;
+      BY_ID[selected].requires.forEach(function (d) { neighbours[d] = true; });
+      BY_ID[selected].unlocks.forEach(function (d) { neighbours[d] = true; });
+    }
+
+    var out = [];
+
+    /* 跨层边（层级差 ≥ 2）会穿过中间层，所以先给它们分配一条绕行通道。
+       相邻层之间没有别的节点，直接用贝塞尔即可。 */
+    var cross = [];
+    NODES.forEach(function (n) {
+      n.requires.forEach(function (pid) {
+        if (pos[pid] && BY_ID[pid].level + 1 < n.level) {
+          cross.push(pid + ">" + n.id);
+        }
+      });
+    });
+    var sideOf = {};
+    var counter = { L: 0, R: 0 };
+    var chanOf = {};
+    cross.forEach(function (key) {
+      var parts = key.split(">");
+      var mid = (pos[parts[0]].cx + pos[parts[1]].cx) / 2;
+      sideOf[key] = mid < size.width / 2 ? "L" : "R";
+    });
+    cross.forEach(function (key) {
+      var s = sideOf[key];
+      chanOf[key] = counter[s]++;
+    });
+
+    function pathFor(pid, cid) {
+      var a = pos[pid], b = pos[cid];
+      var delta = BY_ID[cid].level - BY_ID[pid].level;
+      var y1 = a.y + NODE_H, y2 = b.y;
+
+      if (delta <= 1) {
+        var my = (y1 + y2) / 2;
+        return "M" + a.cx + "," + y1 +
+               " C" + a.cx + "," + my + " " + b.cx + "," + my +
+               " " + b.cx + "," + y2;
+      }
+
+      var key = pid + ">" + cid;
+      var k = chanOf[key] || 0;
+      var chx = sideOf[key] === "L" ? (11 + k * 9) : (size.width - 11 - k * 9);
+      var s1 = y1 + 13;
+      var e1 = y2 - 13;
+      return "M" + a.cx + "," + y1 +
+             " L" + a.cx + "," + s1 +
+             " L" + chx + "," + s1 +
+             " L" + chx + "," + e1 +
+             " L" + b.cx + "," + e1 +
+             " L" + b.cx + "," + y2;
+    }
+
+    // 边：先画，压在节点下面
+    NODES.forEach(function (n) {
+      n.requires.forEach(function (pid) {
+        if (!pos[pid]) { return; }
+        var cls = "edge";
+        if (done.has(pid)) { cls += " e-done"; }
+        if (selected) {
+          if (selected === n.id || selected === pid) { cls += " e-rel"; }
+          else { cls += " e-dim"; }
+        }
+        out.push('<path class="' + cls + '" d="' + pathFor(pid, n.id) + '"/>');
+      });
+    });
+
+    // 节点
+    NODES.forEach(function (n) {
+      var p = pos[n.id];
+      var st = statusOf(n.id);
+      var cls = "node s-" + st;
+      if (selected === n.id) { cls += " is-sel"; }
+      else if (selected && !neighbours[n.id]) { cls += " is-dim"; }
+
+      out.push('<g class="' + cls + '" data-node="' + n.id + '" tabindex="0" role="button" aria-label="' + esc(n.title) + '">');
+      out.push('<rect x="' + p.x + '" y="' + p.y + '" width="' + NODE_W + '" height="' + NODE_H + '" rx="11"/>');
+      out.push('<circle class="dot" cx="' + (p.x + 14) + '" cy="' + (p.y + 14) + '" r="3.6"/>');
+
+      var lines = wrap(n.title, 12.5, NODE_W - 30, 2);
+      var baseY = p.y + NODE_H / 2;
+      if (lines.length === 1) {
+        out.push('<text class="t1" x="' + p.cx + '" y="' + (baseY - 4) + '">' + esc(lines[0]) + '</text>');
+      } else {
+        out.push('<text class="t1" x="' + p.cx + '" y="' + (baseY - 13) + '">' + esc(lines[0]) + '</text>');
+        out.push('<text class="t2" x="' + p.cx + '" y="' + (baseY + 2) + '">' + esc(lines[1]) + '</text>');
+      }
+      out.push('<text class="nid" x="' + p.cx + '" y="' + (p.y + NODE_H - 9) + '">' + n.id + '</text>');
+      out.push("</g>");
+    });
+
+    svg.innerHTML = out.join("");
+  }
+
+  /* ---------------- 详情面板 ---------------- */
+  var panel = document.getElementById("panel");
+
+  function chipList(ids, missSet) {
+    return ids.map(function (id) {
+      var cls = "chip" + (missSet && missSet.has(id) ? " miss" : "");
+      var label = BY_ID[id] ? BY_ID[id].title : id;
+      return '<span class="' + cls + '" data-goto="' + id + '" title="' + esc(label) + '">' + id + "</span>";
+    }).join("");
+  }
+
+  function renderPanel() {
+    if (!selected) {
+      panel.innerHTML = '<div class="empty">点左侧任一节点<br>查看它的详细内容</div>';
+      return;
+    }
+    var n = BY_ID[selected];
+    var st = statusOf(n.id);
+    var stText = { done: "已完成", open: "现在可以学", locked: "还锁着" }[st];
+    var miss = missingOf(n.id);
+
+    var h = [];
+    h.push('<div class="d-head">');
+    h.push('<span class="d-stage">' + esc(n.stage || "未分组") + "</span>");
+    h.push('<h3 class="d-title">' + esc(n.title) + "</h3>");
+    h.push('<code class="d-id">' + n.id + "</code>");
+    h.push("</div>");
+
+    h.push('<div class="d-state">');
+    h.push('<span class="pill p-' + st + '">' + stText + "</span>");
+    if (st === "locked") {
+      h.push('<span style="color:var(--ink3);font-size:12.5px">还缺 ' + miss.length + " 个前置</span>");
+    }
+    h.push("</div>");
+
+    if (n.requires.length) {
+      h.push('<div class="field"><div class="k">前置</div><div class="chips">');
+      h.push(chipList(n.requires, new Set(miss)));
+      h.push("</div></div>");
+    }
+    if (n.unlocks.length) {
+      h.push('<div class="field"><div class="k">学会后解锁</div><div class="chips">');
+      h.push(chipList(n.unlocks, null));
+      h.push("</div></div>");
+    }
+    if (n.skills.length) {
+      h.push('<div class="field"><div class="k">要掌握的知识点</div><ul>');
+      n.skills.forEach(function (s) { h.push("<li>" + esc(s) + "</li>"); });
+      h.push("</ul></div>");
+    }
+    if (n.acceptance.length) {
+      h.push('<div class="field acc"><div class="k">验收标准（逐条自评，全过即合格）</div><ul>');
+      n.acceptance.forEach(function (s) { h.push("<li>" + esc(s) + "</li>"); });
+      h.push("</ul></div>");
+    }
+    if (n.project) {
+      h.push('<div class="field"><div class="k">配套参考项目</div><div class="proj">');
+      h.push("<b>" + esc(n.project.name) + "</b>");
+      if (n.project.note) { h.push("<span>" + esc(n.project.note) + "</span>"); }
+      h.push("</div></div>");
+    }
+    if (n.pitfalls.length) {
+      h.push('<div class="field pit"><div class="k">常见坑（真实踩过的）</div><ul>');
+      n.pitfalls.forEach(function (s) { h.push("<li>" + esc(s) + "</li>"); });
+      h.push("</ul></div>");
+    }
+    if (n.resources.length) {
+      h.push('<div class="field"><div class="k">延伸资源</div>');
+      n.resources.forEach(function (r) {
+        h.push('<div class="res"><a href="' + esc(r.url) + '" target="_blank" rel="noopener">' +
+               esc(r.title) + "</a>");
+        if (r.note) { h.push(' <span>— ' + esc(r.note) + "</span>"); }
+        h.push("</div>");
+      });
+      h.push("</div>");
+    }
+
+    h.push('<div class="d-actions">');
+    h.push('<button class="btn" id="toggle">' +
+           (st === "done" ? "取消完成" : "标记为已完成") + "</button>");
+    if (st === "locked") {
+      h.push('<button class="btn ghost" id="jump">跳到还缺的前置</button>');
+    }
+    h.push("</div>");
+
+    panel.innerHTML = h.join("");
+
+    var toggle = document.getElementById("toggle");
+    if (toggle) {
+      toggle.addEventListener("click", function () {
+        if (done.has(n.id)) { done.delete(n.id); } else { done.add(n.id); }
+        saveDone();
+        renderAll();
+      });
+    }
+    var jump = document.getElementById("jump");
+    if (jump) {
+      jump.addEventListener("click", function () {
+        var first = missingOf(n.id)[0];
+        if (first) { select(first); }
+      });
+    }
+  }
+
+  panel.addEventListener("click", function (e) {
+    var el = e.target.closest("[data-goto]");
+    if (el) { select(el.getAttribute("data-goto")); }
+  });
+
+  /* ---------------- 进度区 ---------------- */
+  function renderProgress() {
+    var total = NODES.length;
+    var n = done.size;
+    var pct = total ? Math.round(n / total * 100) : 0;
+
+    document.getElementById("prog-num").textContent = n + " / " + total;
+    document.getElementById("prog-bar").style.width = pct + "%";
+    document.getElementById("prog-sub").textContent =
+      n === 0 ? "还没有标记任何节点" :
+      pct === 100 ? "全部完成，可以开始实战了" :
+      "已完成 " + pct + "%，继续";
+
+    var open = NODES.filter(function (x) { return statusOf(x.id) === "open"; });
+    var openBox = document.getElementById("open-list");
+    if (!open.length) {
+      openBox.innerHTML = '<span class="none">' + (n === total ? "没有待学了" : "暂时没有可学的节点") + "</span>";
+    } else {
+      openBox.innerHTML = open.map(function (x) {
+        return '<span class="chip" data-goto="' + x.id + '">' + esc(x.title) + "</span>";
+      }).join("");
+    }
+
+    var locked = NODES.filter(function (x) { return statusOf(x.id) === "locked"; });
+    var lockBox = document.getElementById("lock-list");
+    if (!locked.length) {
+      lockBox.innerHTML = '<span class="none">全部解锁</span>';
+    } else {
+      lockBox.innerHTML = locked.map(function (x) {
+        var miss = missingOf(x.id).join("、");
+        return "<div>" + esc(x.title) + ' <code>缺 ' + miss + "</code></div>";
+      }).join("");
+    }
+  }
+
+  document.getElementById("open-list").addEventListener("click", function (e) {
+    var el = e.target.closest("[data-goto]");
+    if (el) { select(el.getAttribute("data-goto")); }
+  });
+
+  /* ---------------- 目标规划 ---------------- */
+  var targetSel = document.getElementById("target");
+
+  function buildTargets() {
+    var opts = ['<option value="">— 选一个目标节点 —</option>'];
+    NODES.forEach(function (n) {
+      opts.push('<option value="' + n.id + '">' + esc(n.title) + "  (" + n.id + ")</option>");
+    });
+    targetSel.innerHTML = opts.join("");
+  }
+
+  function planFor(target) {
+    if (!target) { return []; }
+    // 收集 target 的全部祖先（含自身），去掉已完成的，再按拓扑序排
+    var needed = new Set();
+    var stack = [target];
+    while (stack.length) {
+      var id = stack.pop();
+      if (needed.has(id)) { continue; }
+      needed.add(id);
+      BY_ID[id].requires.forEach(function (d) { stack.push(d); });
+    }
+    return NODES
+      .filter(function (n) { return needed.has(n.id) && !done.has(n.id); })
+      .sort(function (a, b) { return a.rank - b.rank; });
+  }
+
+  function renderPlan() {
+    var target = targetSel.value;
+    var box = document.getElementById("plan");
+    if (!target) {
+      box.innerHTML = '<li style="border:0;color:var(--ink3)">选一个目标就能看到还差哪几步</li>';
+      return;
+    }
+    var list = planFor(target);
+    if (!list.length) {
+      box.innerHTML = '<li style="border:0;color:var(--done)">这个目标的前置都已经完成了</li>';
+      return;
+    }
+    box.innerHTML = list.map(function (n) {
+      var cls = n.id === target ? ' class="target"' : "";
+      return "<li" + cls + "><span>" + esc(n.title) + "</span><code>" + n.id + "</code></li>";
+    }).join("");
+  }
+
+  targetSel.addEventListener("change", renderPlan);
+
+  /* ---------------- 选中与重绘 ---------------- */
+  function select(id) {
+    selected = id;
+    renderAll();
+    var p = pos[id];
+    if (p) {
+      var top = svg.getBoundingClientRect().top + window.scrollY - 90;
+      if (window.scrollY > top) { window.scrollTo({ top: top, behavior: "smooth" }); }
+    }
+  }
+
+  svg.addEventListener("click", function (e) {
+    var g = e.target.closest("g[data-node]");
+    if (g) { select(g.getAttribute("data-node")); }
+  });
+  svg.addEventListener("keydown", function (e) {
+    if (e.key !== "Enter" && e.key !== " ") { return; }
+    var g = e.target.closest("g[data-node]");
+    if (g) { e.preventDefault(); select(g.getAttribute("data-node")); }
+  });
+
+  function renderAll() {
+    render();
+    renderPanel();
+    renderProgress();
+    renderPlan();
+  }
+
+  document.getElementById("reset").addEventListener("click", function () {
+    done = new Set();
+    saveDone();
+    selected = null;
+    targetSel.value = "";
+    renderAll();
+  });
+
+  /* ---------------- 页头统计与页脚 ---------------- */
+  function renderChrome() {
+    var s = DATA.stats;
+    var items = [
+      [s.nodes, "个节点"],
+      [s.edges, "条依赖边"],
+      [s.tests, "项测试"],
+      [s.commands, "个命令"],
+    ];
+    document.getElementById("stats").innerHTML = items.map(function (it) {
+      return '<span class="stat"><b>' + it[0] + "</b>" + it[1] + "</span>";
+    }).join("");
+    document.getElementById("fine").textContent =
+      "数据版本 " + DATA.generatedAt + " · " + s.stages + " 个阶段 · " + s.nodes + " 个节点";
+  }
+
+  /* ---------------- 启动 ---------------- */
+  buildTargets();
+  renderChrome();
+  renderAll();
+})();
+</script>
+
+</body>
+</html>
