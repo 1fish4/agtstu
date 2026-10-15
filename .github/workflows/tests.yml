@@ -7,6 +7,13 @@ on:
     branches: [main]
   workflow_dispatch:
 
+env:
+  # 英文 Windows 运行器的默认输出编码是 cp1252，**无法编码中文**，
+  # 任何打印中文的脚本都会抛 UnicodeEncodeError。
+  # 强制 Python 进入 UTF-8 模式，一次性覆盖测试与脚本的所有环节。
+  PYTHONUTF8: "1"
+  PYTHONIOENCODING: utf-8
+
 jobs:
   test:
     name: ${{ matrix.os }} / py${{ matrix.python-version }}
@@ -36,5 +43,16 @@ jobs:
       - name: 校验路径数据
         run: python -m agtstu check
 
-      - name: 试构建静态展示页
+      - name: 构建展示页
         run: python tools/build_site.py
+
+      # 只在一个 job 上跑，避免重复
+      - name: 检查提交的展示页是否与数据同步
+        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.11'
+        run: |
+          if ! git diff --quiet -- docs/; then
+            echo "::error::docs/index.html 与 path.yaml 不同步"
+            echo "请在本地重新运行 python tools/build_site.py 并提交产物"
+            git --no-pager diff --stat -- docs/
+            exit 1
+          fi
