@@ -7,6 +7,10 @@
 [![Tests](https://github.com/1fish4/agtstu/actions/workflows/tests.yml/badge.svg)](https://github.com/1fish4/agtstu/actions)
 [![Gitee](https://img.shields.io/badge/Gitee-mirror-c71d23.svg)](https://gitee.com/not-even-xianyu-can-handle-it/agtstu)
 
+**在线浏览 → <https://1fish4.github.io/agtstu/>**（依赖图可视化 · 进度模拟 · 目标路径规划）
+
+![学习路径依赖图](docs/images/dependency-graph.png)
+
 ## 为什么需要它
 
 学完 Python 语法，和能交付一个完整项目，中间隔着一道巨大的鸿沟。
@@ -128,6 +132,12 @@ agtstu/
 ├── tests/
 │   ├── test_graph.py   # 引擎算法测试
 │   └── test_cli.py     # 命令行测试
+├── tools/
+│   ├── build_site.py   # 把 path.yaml 编译成静态站
+│   └── template.html   # 展示页模板
+├── docs/
+│   ├── index.html      # 编译产物：展示页（GitHub Pages 托管）
+│   └── images/         # 配图
 ├── ROADMAP.md          # 分期计划
 ├── DEVLOG.md           # 开发日志
 └── CHANGELOG.md        # 版本变更
@@ -157,6 +167,20 @@ python -m venv .venv
 pip install -e ".[dev]"
 pytest
 ```
+
+### 生成展示页
+
+`docs/index.html` 是**编译产物，不手写**：
+
+```bash
+python tools/build_site.py
+```
+
+它读取 `agtstu/data/path.yaml`，先跑一遍数据校验（有环 / 悬空引用 / 孤立节点就中止构建），
+再编译成**单文件站点** —— 数据内嵌其中，没有任何外部依赖，双击也能打开。
+GitHub Pages 直接托管 `docs/` 目录。
+
+> 改完内容记得重新构建并提交 `docs/index.html`，否则线上页面不会更新。
 
 ## 路线图
 
