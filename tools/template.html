@@ -1008,7 +1008,8 @@
       return '<span class="stat"><b>' + it[0] + "</b>" + it[1] + "</span>";
     }).join("");
     document.getElementById("fine").textContent =
-      "数据版本 " + DATA.generatedAt + " · " + s.stages + " 个阶段 · " + s.nodes + " 个节点";
+      "由 path.yaml 编译生成 · " + s.stages + " 个阶段 · " + s.nodes +
+      " 个节点 · " + s.edges + " 条依赖边";
   }
 
   /* ---------------- 启动 ---------------- */

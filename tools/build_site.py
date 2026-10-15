@@ -21,13 +21,13 @@ from __future__ import annotations
 
 import json
 import sys
-from datetime import date
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 from agtstu import graph  # noqa: E402
+from agtstu.console import enable_utf8  # noqa: E402
 from agtstu.loader import load_nodes  # noqa: E402
 from agtstu.model import Node  # noqa: E402
 
@@ -99,7 +99,9 @@ def build_payload(nodes: list[Node]) -> dict:
     ]
 
     return {
-        "generatedAt": date.today().isoformat(),
+        # 注意：这里**不能**写构建日期。产物必须由输入唯一决定，
+        # 否则同一份数据每次构建都不一样，CI 就无法校验
+        # 「提交的 index.html 是否与数据同步」。
         "stats": {
             "nodes": len(nodes),
             "edges": sum(len(n.requires) for n in nodes),
@@ -113,6 +115,10 @@ def build_payload(nodes: list[Node]) -> dict:
 
 
 def main() -> int:
+    # 英文 Windows 的默认输出编码是 cp1252，打印中文会直接抛异常
+    # （GitHub Actions 的 windows-latest 就是这种环境）。
+    enable_utf8()
+
     nodes = load_nodes()
 
     issues = graph.validate(nodes)
