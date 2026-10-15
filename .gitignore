@@ -1,0 +1,43 @@
+# ---------- Python 缓存与构建产物 ----------
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.eggs/
+
+# ---------- 虚拟环境 ----------
+# 注：Python 创建虚拟环境时会自动在其中放一个内容为 * 的 .gitignore，
+# 所以 venv 本就被忽略。这里再写一遍，防止换个位置建环境时漏掉。
+venv/
+.venv/
+env/
+ENV/
+
+# ---------- 测试与静态检查缓存 ----------
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+
+# ---------- IDE ----------
+.idea/
+*.iml
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+
+# ---------- 系统文件 ----------
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ---------- 临时文件 ----------
+tempCodeRunnerFile.py
+*.log
+*.bak
+
+# ---------- 密钥 ----------
+.env
+*.key
