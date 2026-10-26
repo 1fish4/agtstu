@@ -75,9 +75,31 @@ def build_payload(nodes: list[Node]) -> dict:
             "rank": rank.get(node.id, 0),
             "requires": list(node.requires),
             "unlocks": unlocks[node.id],
-            "skills": list(node.skills),
+            "summary": node.summary,
+            "skills": [
+                {
+                    "id": t.id,
+                    "title": t.title,
+                    "what": t.what,
+                    "example": t.example,
+                    "output": t.output,
+                    "note": t.note,
+                }
+                for t in node.skills
+            ],
             "acceptance": list(node.acceptance),
-            "pitfalls": list(node.pitfalls),
+            "pitfalls": [
+                {
+                    "text": p.text,
+                    "symptom": p.symptom,
+                    "scene": p.scene,
+                    "why": p.why,
+                    "fix": p.fix,
+                    "search": p.search,
+                    "structured": p.structured,
+                }
+                for p in node.pitfalls
+            ],
             "project": (
                 {
                     "name": node.project.name,

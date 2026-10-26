@@ -126,9 +126,10 @@ def cmd_next(args) -> int:
     for nid in open_ids:
         node = index[nid]
         print(f"  ○ {nid}  —  {node.title}")
-        if node.skills:
-            print(f"      知识点：{'、'.join(node.skills[:3])}"
-                  + ("…" if len(node.skills) > 3 else ""))
+        titles = node.topic_titles
+        if titles:
+            print(f"      知识点：{'、'.join(titles[:3])}"
+                  + ("…" if len(titles) > 3 else ""))
     print("\n随便挑一个开始即可，顺序不影响。用 `agtstu show <id>` 看详情。")
     return 0
 
@@ -150,6 +151,8 @@ def cmd_show(args) -> int:
     print(f"{mark} {node.title}  ({node.id})   状态：{note}")
     if node.stage:
         print(f"阶段：{node.stage}")
+    if node.summary:
+        print(f"\n{node.summary}")
 
     def section(title: str, items: list[str]) -> None:
         if items:
@@ -160,7 +163,7 @@ def cmd_show(args) -> int:
     if node.requires:
         print("\n前置：" + "、".join(node.requires))
 
-    section("要掌握的知识点", node.skills)
+    section("要掌握的知识点", node.topic_titles)
     section("验收标准", node.acceptance)
 
     if node.project:
@@ -170,7 +173,11 @@ def cmd_show(args) -> int:
         if node.project.note:
             print("  说明：" + node.project.note)
 
-    section("常见坑（作者踩过的）", node.pitfalls)
+    if node.pitfalls:
+        print("\n常见坑（作者踩过的）")
+        for p in node.pitfalls:
+            head = (p.text or p.symptom or "").strip().splitlines()
+            print(f"  - {head[0] if head else ''}")
 
     if node.resources:
         print("\n延伸资源")
