@@ -4,6 +4,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.9%2B-blue.svg)](https://www.python.org/)
+[![Release](https://img.shields.io/github/v/release/1fish4/agtstu)](https://github.com/1fish4/agtstu/releases)
 [![Tests](https://github.com/1fish4/agtstu/actions/workflows/tests.yml/badge.svg)](https://github.com/1fish4/agtstu/actions)
 [![Gitee](https://img.shields.io/badge/Gitee-mirror-c71d23.svg)](https://gitee.com/not-even-xianyu-can-handle-it/agtstu)
 
