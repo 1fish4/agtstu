@@ -394,6 +394,220 @@
     padding: 1px 5px; border-radius: 4px;
   }
 
+  /* ---------- 节点详情覆盖层 ---------- */
+  .overlay {
+    position: fixed; inset: 0; z-index: 100;
+    background: rgba(20, 24, 29, .42);
+    display: none;
+    padding: 30px;
+  }
+  .overlay.open { display: flex; align-items: center; justify-content: center; }
+  .sheet {
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    width: min(900px, 100%);
+    max-height: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 24px 64px rgba(0, 0, 0, .26);
+    will-change: transform, opacity;
+    transform-origin: center center;
+  }
+  .sheet-head {
+    padding: 22px 28px 18px;
+    border-bottom: 1px solid var(--line);
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+  }
+  .sheet-head h2 { margin: 0 0 7px; font-size: 22px; letter-spacing: -.01em; }
+  .sheet-meta { font-size: 12.5px; color: var(--ink3); font-family: var(--mono); }
+  .sheet-close {
+    margin-left: auto; flex: none;
+    width: 34px; height: 34px; border-radius: 9px;
+    border: 1px solid var(--line); background: var(--card);
+    color: var(--ink2); font-size: 19px; line-height: 1; cursor: pointer;
+  }
+  .sheet-close:hover { border-color: var(--ink3); color: var(--ink); }
+  .sheet-body {
+    overflow-y: auto;
+    flex: 1;
+    min-height: 0;
+    padding: 18px 28px 26px;
+    scroll-behavior: smooth;
+  }
+
+  .topic-what {
+    font-size: 14.5px; color: var(--ink2);
+    margin: 0 0 20px; line-height: 1.78;
+  }
+  .block-label {
+    font-size: 11px; letter-spacing: .06em; color: var(--ink3);
+    margin: 0 0 7px; font-weight: 700;
+  }
+  .code-block {
+    background: #1E252D; color: #E6EDF3;
+    border-radius: 10px; padding: 16px 18px;
+    font-family: var(--mono); font-size: 12.8px; line-height: 1.72;
+    overflow-x: auto; margin: 0 0 14px;
+    white-space: pre;
+  }
+  .out-block {
+    background: var(--line2); border-radius: 8px;
+    padding: 11px 14px; margin: 0 0 18px;
+    font-family: var(--mono); font-size: 12.5px; color: var(--ink2);
+    white-space: pre; overflow-x: auto;
+  }
+  .topic-note {
+    margin-top: 6px; padding: 12px 16px;
+    border-left: 3px solid var(--accent2);
+    background: var(--soft); border-radius: 0 8px 8px 0;
+    font-size: 13.5px; color: var(--ink2); line-height: 1.7;
+  }
+  .empty-topic { color: var(--ink3); font-size: 13.5px; line-height: 1.8; }
+
+  .pit-row { margin-bottom: 13px; }
+  .pit-row:last-child { margin-bottom: 0; }
+  .pit-k {
+    font-size: 11px; font-weight: 700; letter-spacing: .05em;
+    color: var(--ink3); margin-bottom: 5px;
+  }
+  .pit-v { font-size: 13.5px; color: var(--ink2); line-height: 1.72; }
+  .pit-v pre {
+    margin: 0; font-family: var(--mono); font-size: 12.3px;
+    background: var(--line2); border-radius: 7px; padding: 10px 12px;
+    white-space: pre-wrap; word-break: break-word; color: var(--ink);
+  }
+  .pit-search {
+    display: inline-block; margin-top: 5px;
+    font-family: var(--mono); font-size: 11.5px;
+    border: 1px dashed var(--line); border-radius: 5px;
+    padding: 3px 9px; color: var(--ink3);
+  }
+  .sheet-foot {
+    border-top: 1px solid var(--line);
+    padding: 14px 28px; display: flex; gap: 12px; align-items: center;
+  }
+
+  /* ---------- 知识点卡片（逐个展开） ---------- */
+  .step { position: relative; padding-left: 44px; }
+  .step::before {
+    content: ""; position: absolute;
+    left: 15px; top: 32px; bottom: 0; width: 2px;
+    background: var(--line);
+  }
+  .step:last-of-type::before { display: none; }
+  .step-dot {
+    position: absolute; left: 0; top: 8px;
+    width: 32px; height: 32px; border-radius: 50%;
+    background: var(--card); border: 1.6px solid var(--line);
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--mono); font-size: 10.5px; color: var(--ink3);
+    transition: border-color .2s, color .2s;
+  }
+  .step.open .step-dot { border-color: var(--accent); color: var(--accent); }
+  .step-head {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 12px 10px 0;
+    min-height: 48px;
+    cursor: pointer; border-radius: 10px;
+    transition: background .15s;
+  }
+  .step-head:hover { background: var(--line2); }
+  .step-title {
+    font-size: 15px; font-weight: 600; color: var(--ink2);
+    transition: color .15s;
+  }
+  .step.open .step-title { color: var(--ink); }
+  .step-tag {
+    margin-left: auto; font-size: 11px; color: var(--ink3);
+    border: 1px solid var(--line); border-radius: 5px; padding: 1px 7px;
+  }
+  .step-body { display: none; padding: 2px 0 18px; }
+  .step.open .step-body { display: block; animation: drop .22s ease; }
+  @keyframes drop {
+    from { opacity: 0; transform: translateY(-5px); }
+    to   { opacity: 1; transform: none; }
+  }
+
+  /* ---------- 坑 ---------- */
+  .pit-block { margin-top: 30px; padding-left: 44px; position: relative; }
+  .pit-block::before {
+    content: ""; position: absolute;
+    left: 15px; top: 34px; bottom: 0; width: 2px;
+    background: var(--line);
+  }
+  .pit-block-head { position: relative; display: flex; align-items: center; margin-bottom: 14px; }
+  .pit-block-head .dot {
+    position: absolute; left: -44px; top: 0;
+    width: 32px; height: 32px; border-radius: 50%;
+    background: var(--warnSoft); border: 1.6px solid var(--warn);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--warn); font-family: var(--mono); font-size: 13px;
+  }
+  .pit-block-head h4 {
+    margin: 0; font-size: 15px; color: var(--warn);
+  }
+  .pit-card {
+    border: 1px solid var(--line); border-radius: 11px;
+    background: var(--card); margin-bottom: 9px; overflow: hidden;
+  }
+  .pit-head {
+    display: flex; align-items: flex-start; gap: 10px;
+    padding: 12px 15px; cursor: pointer;
+    transition: background .15s;
+  }
+  .pit-head:hover { background: var(--line2); }
+  .pit-num {
+    flex: none; width: 19px; height: 19px; border-radius: 5px;
+    background: var(--warnSoft); color: var(--warn);
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--mono); font-size: 10px; margin-top: 2px;
+  }
+  .pit-sym {
+    font-family: var(--mono); font-size: 12.3px; color: var(--ink2);
+    line-height: 1.55; word-break: break-word;
+  }
+  .pit-card.open .pit-head { background: var(--warnSoft); }
+  .pit-body { display: none; padding: 0 16px 16px; }
+  .pit-card.open .pit-body { display: block; animation: drop .22s ease; }
+
+  .step-counter {
+    font-family: var(--mono); font-size: 12.5px; color: var(--ink3);
+    margin: 0 12px;
+  }
+
+  /* 左右两侧的上下知识点跳转 */
+  .ov-nav {
+    position: fixed; top: 50%; transform: translateY(-50%);
+    z-index: 110;
+    display: none;
+    flex-direction: column; align-items: center; gap: 6px;
+    padding: 13px 9px;
+    border-radius: 11px;
+    border: 1px solid var(--line); background: var(--card);
+    box-shadow: var(--shadow);
+    cursor: pointer;
+    writing-mode: vertical-rl;
+    letter-spacing: 3px;
+    font-size: 12px; color: var(--ink2);
+    transition: color .15s, border-color .15s;
+  }
+  .ov-nav:hover { color: var(--accent); border-color: var(--accent); }
+  .ov-nav.show { display: flex; }
+  .ov-nav.prev { left: 16px; }
+  .ov-nav.next { right: 16px; }
+  @media (max-width: 1100px) { .ov-nav { display: none !important; } }
+
+  @media (max-width: 720px) {
+    .overlay { padding: 0; }
+    .sheet { border-radius: 0; height: 100%; max-height: none; }
+    .sheet-body { padding: 14px 16px 20px; }
+    .sheet-head, .sheet-foot { padding-left: 16px; padding-right: 16px; }
+  }
+
   /* ---------- 页脚 ---------- */
   footer {
     border-top: 1px solid var(--line);
@@ -523,6 +737,28 @@
   </section>
 
 </main>
+
+<div class="overlay" id="overlay" aria-hidden="true">
+  <button class="ov-nav prev" id="ov-arrow-prev" aria-label="上一知识点">上一知识点</button>
+  <button class="ov-nav next" id="ov-arrow-next" aria-label="下一知识点">下一知识点</button>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="ov-title">
+    <div class="sheet-head">
+      <div>
+        <h2 id="ov-title"></h2>
+        <div class="sheet-meta" id="ov-meta"></div>
+      </div>
+      <button class="sheet-close" id="ov-close" aria-label="关闭">×</button>
+    </div>
+    <div class="sheet-body" id="ov-main"></div>
+    <div class="sheet-foot">
+      <button class="btn ghost" id="ov-prev">← 上一个</button>
+      <button class="btn" id="ov-next">下一个 →</button>
+      <span class="step-counter" id="ov-counter"></span>
+      <button class="btn ghost" id="ov-toggle">标记为已完成</button>
+      <span style="font-size:12px;color:var(--ink3);margin-left:auto" id="ov-state"></span>
+    </div>
+  </div>
+</div>
 
 <footer>
   <div class="links">
@@ -809,8 +1045,13 @@
       h.push("</div></div>");
     }
     if (n.skills.length) {
-      h.push('<div class="field"><div class="k">要掌握的知识点</div><ul>');
-      n.skills.forEach(function (s) { h.push("<li>" + esc(s) + "</li>"); });
+      h.push('<div class="field"><div class="k">要掌握的知识点（' + n.skills.length + '）</div><ul>');
+      n.skills.forEach(function (s) {
+        var tag = s.example
+          ? ' <span style="color:var(--accent);font-size:11px">含示例</span>'
+          : "";
+        h.push("<li>" + esc(s.title) + tag + "</li>");
+      });
       h.push("</ul></div>");
     }
     if (n.acceptance.length) {
@@ -826,7 +1067,10 @@
     }
     if (n.pitfalls.length) {
       h.push('<div class="field pit"><div class="k">常见坑（真实踩过的）</div><ul>');
-      n.pitfalls.forEach(function (s) { h.push("<li>" + esc(s) + "</li>"); });
+      n.pitfalls.forEach(function (p) {
+        var t = p.structured ? (p.symptom || p.text) : p.text;
+        h.push("<li>" + esc((t || "").split("\n")[0]) + "</li>");
+      });
       h.push("</ul></div>");
     }
     if (n.resources.length) {
@@ -841,7 +1085,10 @@
     }
 
     h.push('<div class="d-actions">');
-    h.push('<button class="btn" id="toggle">' +
+    h.push('<button class="btn" id="expand">展开知识点与示例 →</button>');
+    h.push("</div>");
+    h.push('<div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">');
+    h.push('<button class="btn ghost" id="toggle">' +
            (st === "done" ? "取消完成" : "标记为已完成") + "</button>");
     if (st === "locked") {
       h.push('<button class="btn ghost" id="jump">跳到还缺的前置</button>');
@@ -863,6 +1110,12 @@
       jump.addEventListener("click", function () {
         var first = missingOf(n.id)[0];
         if (first) { select(first); }
+      });
+    }
+    var expand = document.getElementById("expand");
+    if (expand) {
+      expand.addEventListener("click", function () {
+        openNode(n.id, expand.getBoundingClientRect());
       });
     }
   }
@@ -972,12 +1225,22 @@
 
   svg.addEventListener("click", function (e) {
     var g = e.target.closest("g[data-node]");
-    if (g) { select(g.getAttribute("data-node")); }
+    if (!g) { return; }
+    var id = g.getAttribute("data-node");
+    // select() 会重建整个 SVG，节点元素随即失效——位置必须先取
+    var rect = g.getBoundingClientRect();
+    select(id);
+    openNode(id, rect);
   });
   svg.addEventListener("keydown", function (e) {
     if (e.key !== "Enter" && e.key !== " ") { return; }
     var g = e.target.closest("g[data-node]");
-    if (g) { e.preventDefault(); select(g.getAttribute("data-node")); }
+    if (!g) { return; }
+    e.preventDefault();
+    var id = g.getAttribute("data-node");
+    var rect = g.getBoundingClientRect();
+    select(id);
+    openNode(id, rect);
   });
 
   function renderAll() {
@@ -993,6 +1256,268 @@
     selected = null;
     targetSel.value = "";
     renderAll();
+  });
+
+  /* ---------------- 节点详情（全屏展开 + 逐个推进） ---------------- */
+  var overlay = document.getElementById("overlay");
+  var sheet = overlay.querySelector(".sheet");
+  var cur = null;   // { id, open: 展开的知识点下标, pit: 展开的坑下标, rect: 起始位置 }
+
+  function openNode(id, rect) {
+    var n = BY_ID[id];
+    cur = {
+      id: id,
+      open: n.skills.length ? 0 : -1,
+      pit: -1,
+      rect: rect || null,
+    };
+    renderSheet();
+
+    var body = document.getElementById("ov-main");
+    body.scrollTop = 0;
+    overlay.classList.add("open");
+    overlay.setAttribute("aria-hidden", "false");
+    document.body.style.overflow = "hidden";
+
+    // FLIP：先摆到起始方块的位置与尺寸，再过渡到全屏
+    if (rect) {
+      var b = sheet.getBoundingClientRect();
+      if (b.width > 0 && b.height > 0) {
+        var dx = (rect.left + rect.width / 2) - (b.left + b.width / 2);
+        var dy = (rect.top + rect.height / 2) - (b.top + b.height / 2);
+        var sx = rect.width / b.width;
+        var sy = rect.height / b.height;
+        sheet.style.transition = "none";
+        sheet.style.transform =
+          "translate(" + dx + "px," + dy + "px) scale(" + sx + "," + sy + ")";
+        sheet.style.opacity = "0";
+        void sheet.offsetWidth;          // 强制重排，让起始状态生效
+        sheet.style.transition =
+          "transform .34s cubic-bezier(.22,.85,.3,1), opacity .18s ease";
+        sheet.style.transform = "translate(0,0) scale(1,1)";
+        sheet.style.opacity = "1";
+      }
+    }
+  }
+
+  function closeSheet() {
+    if (!cur) { return; }
+    var rect = cur.rect;
+    var delay = 0;
+
+    if (rect) {
+      var b = sheet.getBoundingClientRect();
+      if (b.width > 0 && b.height > 0) {
+        var dx = (rect.left + rect.width / 2) - (b.left + b.width / 2);
+        var dy = (rect.top + rect.height / 2) - (b.top + b.height / 2);
+        sheet.style.transition =
+          "transform .26s cubic-bezier(.45,0,.75,.35), opacity .2s ease";
+        sheet.style.transform =
+          "translate(" + dx + "px," + dy + "px) scale(" +
+          (rect.width / b.width) + "," + (rect.height / b.height) + ")";
+        sheet.style.opacity = "0";
+        delay = 260;
+      }
+    }
+    cur = null;
+
+    setTimeout(function () {
+      overlay.classList.remove("open");
+      overlay.setAttribute("aria-hidden", "true");
+      document.body.style.overflow = "";
+      sheet.style.transition = "none";
+      sheet.style.transform = "";
+      sheet.style.opacity = "";
+    }, delay);
+  }
+
+  function renderSheet() {
+    if (!cur) { return; }
+    var n = BY_ID[cur.id];
+    var st = statusOf(n.id);
+
+    document.getElementById("ov-title").textContent = n.title;
+    var meta = [];
+    if (n.stage) { meta.push(n.stage); }
+    meta.push(n.id);
+    if (n.requires.length) { meta.push("前置 " + n.requires.join("、")); }
+    document.getElementById("ov-meta").textContent = meta.join("  ·  ");
+
+    var h = [];
+
+    if (!n.skills.length) {
+      h.push('<div class="empty-topic">这个节点还没有拆分知识点。</div>');
+    }
+    n.skills.forEach(function (s, i) {
+      var num = ("0" + (i + 1)).slice(-2);
+      var cls = "step" + (cur.open === i ? " open" : "");
+      h.push('<div class="' + cls + '" data-step="' + i + '">');
+      h.push('<div class="step-dot">' + num + "</div>");
+      h.push('<div class="step-head"><div class="step-title">' + esc(s.title) + "</div>");
+      if (s.example) { h.push('<div class="step-tag">含示例</div>'); }
+      h.push("</div>");
+      h.push('<div class="step-body">' + topicBody(s) + "</div>");
+      h.push("</div>");
+    });
+
+    if (n.pitfalls.length) {
+      h.push('<div class="pit-block">');
+      h.push('<div class="pit-block-head"><div class="dot">!</div>');
+      h.push("<h4>常见坑 · " + n.pitfalls.length + " 条</h4></div>");
+      n.pitfalls.forEach(function (p, i) {
+        var label = p.structured ? (p.symptom || p.text) : p.text;
+        label = (label || "").split("\n")[0];
+        var cls = "pit-card" + (cur.pit === i ? " open" : "");
+        h.push('<div class="' + cls + '" data-pit="' + i + '">');
+        h.push('<div class="pit-head"><div class="pit-num">' + (i + 1) + "</div>");
+        h.push('<div class="pit-sym">' + esc(label) + "</div></div>");
+        h.push('<div class="pit-body">' + pitBody(p) + "</div></div>");
+      });
+      h.push("</div>");
+    }
+
+    document.getElementById("ov-main").innerHTML = h.join("");
+
+    var total = n.skills.length;
+    var idx = cur.open;
+    document.getElementById("ov-counter").textContent =
+      total ? (Math.max(idx, 0) + 1) + " / " + total : "";
+
+    var prev = document.getElementById("ov-prev");
+    var next = document.getElementById("ov-next");
+    prev.disabled = idx <= 0;
+    next.disabled = idx < 0 || idx >= total - 1;
+    prev.style.opacity = prev.disabled ? ".4" : "1";
+    next.style.opacity = next.disabled ? ".4" : "1";
+
+    var btn = document.getElementById("ov-toggle");
+    btn.textContent = st === "done" ? "取消完成" : "标记为已完成";
+    document.getElementById("ov-state").textContent =
+      { done: "已完成", open: "现在可以学", locked: "还锁着，前置未完成" }[st];
+
+    renderArrows();
+  }
+
+  function renderArrows() {
+    if (!cur) { return; }
+    var total = BY_ID[cur.id].skills.length;
+    var show = total > 0 && cur.open >= 0;
+    document.getElementById("ov-arrow-prev").className =
+      "ov-nav prev" + (show && cur.open > 0 ? " show" : "");
+    document.getElementById("ov-arrow-next").className =
+      "ov-nav next" + (show && cur.open < total - 1 ? " show" : "");
+  }
+
+  function scrollToStep(i) {
+    var el = document.querySelector('[data-step="' + i + '"]');
+    if (el) { el.scrollIntoView({ block: "start", behavior: "smooth" }); }
+  }
+
+  function topicBody(t) {
+    if (!t) { return ""; }
+    var h = [];
+    if (t.what) { h.push('<p class="topic-what">' + esc(t.what) + "</p>"); }
+    if (t.example) {
+      h.push('<div class="block-label">怎么写</div>');
+      h.push('<pre class="code-block">' + esc(t.example.replace(/\s+$/, "")) + "</pre>");
+    }
+    if (t.output) {
+      h.push('<div class="block-label">运行结果</div>');
+      h.push('<pre class="out-block">' + esc(t.output.replace(/\s+$/, "")) + "</pre>");
+    }
+    if (t.note) { h.push('<div class="topic-note">' + esc(t.note) + "</div>"); }
+    if (!t.example && !t.what && !t.note) {
+      h.push('<div class="empty-topic">这个知识点还没有补示例。</div>');
+    }
+    return h.join("");
+  }
+
+  function pitBody(p) {
+    if (!p.structured) {
+      return '<div class="pit-v">' + esc(p.text) + "</div>";
+    }
+    var h = [];
+    if (p.scene) {
+      h.push('<div class="pit-row"><div class="pit-k">什么情况下会遇到</div>');
+      h.push('<div class="pit-v"><pre>' + esc(p.scene.replace(/\s+$/, "")) + "</pre></div></div>");
+    }
+    if (p.why) {
+      h.push('<div class="pit-row"><div class="pit-k">为什么</div>');
+      h.push('<div class="pit-v">' + esc(p.why.trim()) + "</div></div>");
+    }
+    if (p.fix) {
+      h.push('<div class="pit-row"><div class="pit-k">怎么改</div>');
+      h.push('<div class="pit-v"><pre>' + esc(p.fix.replace(/\s+$/, "")) + "</pre></div></div>");
+    }
+    if (p.search) {
+      h.push('<div class="pit-row"><div class="pit-k">搜这个</div>');
+      h.push('<div class="pit-v"><span class="pit-search">' + esc(p.search) + "</span></div></div>");
+    }
+    return h.join("");
+  }
+
+  overlay.addEventListener("click", function (e) {
+    if (e.target === overlay) { closeSheet(); return; }
+
+    var s = e.target.closest("[data-step]");
+    if (s) {
+      var i = Number(s.getAttribute("data-step"));
+      cur.open = (cur.open === i) ? -1 : i;   // 再点一次收起
+      cur.pit = -1;
+      renderSheet();
+      if (cur.open >= 0) { scrollToStep(cur.open); }
+      return;
+    }
+
+    var p = e.target.closest("[data-pit]");
+    if (p) {
+      var j = Number(p.getAttribute("data-pit"));
+      cur.pit = (cur.pit === j) ? -1 : j;
+      renderSheet();
+    }
+  });
+
+  document.getElementById("ov-prev").addEventListener("click", function () {
+    if (!cur || cur.open <= 0) { return; }
+    cur.open -= 1;
+    cur.pit = -1;
+    renderSheet();
+    scrollToStep(cur.open);
+  });
+
+  document.getElementById("ov-next").addEventListener("click", function () {
+    if (!cur) { return; }
+    var total = BY_ID[cur.id].skills.length;
+    if (cur.open >= total - 1) { return; }
+    cur.open += 1;
+    cur.pit = -1;
+    renderSheet();
+    scrollToStep(cur.open);
+  });
+
+  document.getElementById("ov-close").addEventListener("click", closeSheet);
+
+  document.getElementById("ov-arrow-prev").addEventListener("click", function () {
+    document.getElementById("ov-prev").click();
+  });
+  document.getElementById("ov-arrow-next").addEventListener("click", function () {
+    document.getElementById("ov-next").click();
+  });
+
+  document.getElementById("ov-toggle").addEventListener("click", function () {
+    if (!cur) { return; }
+    var id = cur.id;
+    if (done.has(id)) { done.delete(id); } else { done.add(id); }
+    saveDone();
+    renderAll();
+    renderSheet();
+  });
+
+  document.addEventListener("keydown", function (e) {
+    if (!overlay.classList.contains("open")) { return; }
+    if (e.key === "Escape") { closeSheet(); }
+    if (e.key === "ArrowRight") { document.getElementById("ov-next").click(); }
+    if (e.key === "ArrowLeft") { document.getElementById("ov-prev").click(); }
   });
 
   /* ---------------- 页头统计与页脚 ---------------- */
