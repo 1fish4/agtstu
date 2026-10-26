@@ -86,89 +86,670 @@ nodes:
     title: 变量与基本类型
     stage: 阶段一 · Python 与工程基础
     requires: [py_env]
+    summary: 先把「这个值到底是什么类型」搞清楚——后面八成的报错都和它有关。
     skills:
-      - 变量与赋值
-      - int / float / str / bool 四种基本类型
-      - 类型转换与 type() 查看类型
-      - input() 与 print()
-      - f-string 格式化
+      - id: assign
+        title: 变量与赋值
+        what: 变量不是装东西的盒子，而是贴在值上的名字。重新赋值，只是把名字挪到新值上。
+        example: |
+          score = 60
+          score = score + 5
+          print(score)
+        output: |
+          65
+        note: 第二行先算右边（60 + 5），再把 score 这个名字贴到新值 65 上。
+
+      - id: types
+        title: 四种基本类型
+        what: int 整数、float 小数、str 文本、bool 真假。类型决定了这个值能做什么运算。
+        example: |
+          print(42, type(42))
+          print(3.14, type(3.14))
+          print("hello", type("hello"))
+          print(True, type(True))
+        output: |
+          42 <class 'int'>
+          3.14 <class 'float'>
+          hello <class 'str'>
+          True <class 'bool'>
+
+      - id: convert
+        title: type() 与类型转换
+        what: 用 int() / float() / str() 在类型之间转换。转换失败会抛 ValueError。
+        example: |
+          raw = "18"
+          print(int(raw) + 1)        # 19  转成数字才能做算术
+          print(str(19) + "岁")      # 19岁  转成文本才能拼接
+          print(float("3.5"))        # 3.5
+        output: |
+          19
+          19岁
+          3.5
+        note: int("3.5") 会报错，因为 "3.5" 不是整数字面量——要先 float("3.5") 再 int()。
+
+      - id: io
+        title: input() 与 print()
+        what: input() 读一行输入，返回的**永远是字符串**；print() 把值输出到屏幕。
+        example: |
+          raw = input("请输入一个数字：")   # 假设用户输入 7
+          print(type(raw))                  # <class 'str'>
+          print(int(raw) + 1)               # 8
+        output: |
+          请输入一个数字：7
+          <class 'str'>
+          8
+        note: input() 不猜你的意图。哪怕用户输入的是 7，拿到的也是 "7"。
+
+      - id: fstring
+        title: f-string 格式化
+        what: 在字符串前加 f，用花括号塞变量进去，可以顺带控制小数位。
+        example: |
+          name = "小明"
+          score = 92.5
+          print(f"{name} 考了 {score} 分")   # 小明 考了 92.5 分
+          print(f"{score:.1f}")              # 92.5
+          print(f"{score:.0f}")              # 92
+        note: f-string 会自动把数字转成字符串，所以它同时解决了「类型不匹配」和「拼接难读」两个问题。
     acceptance:
       - 能写一个接收输入、做转换、输出结果的小脚本
       - 能解释 input() 返回的是什么类型
       - 能说出 / 与 // 的区别
+      - 看到 TypeError 时，能立刻判断出是哪两个类型不匹配
     project:
       name: 温度转换器
       note: 输入摄氏度输出华氏度，再支持反向转换
     pitfalls:
-      - input() 拿到的一律是字符串，不转换就直接做算术会报错或算出奇怪结果
-      - / 是浮点除法，// 才是整除；想取整别用 /
-      - 浮点数有精度问题，0.1 + 0.2 不等于 0.3，比较时要注意
-      - 变量名用中文能跑，但工程上不要这么写
+      - symptom: |
+          TypeError: can only concatenate str (not "int") to str
+        scene: |
+          age = 18
+          print("年龄：" + age)
+        why: |
+          + 在两边都是字符串时表示"拼接"，两边都是数字时表示"相加"。
+          一边 str 一边 int 时 Python 不会替你猜，直接报错。
+        fix: |
+          print(f"年龄：{age}")            # 推荐：f-string 自动转字符串
+          print("年龄：" + str(age))       # 或者手动转
+        search: 'TypeError can only concatenate str not int'
+
+      - symptom: |
+          ValueError: invalid literal for int() with base 10: '3.5'
+        scene: |
+          num = int("3.5")      # 用户输入了小数，你却当成整数转
+        why: |
+          int() 只接受整数字面量。"3.5" 里有个小数点，它不认。
+        fix: |
+          num = int(float("3.5"))    # 先转 float 再转 int，得到 3
+        search: 'ValueError invalid literal for int() with base 10'
+
+      - symptom: |
+          程序不报错，但 if 判断永远进不去（最阴的一种）
+        scene: |
+          answer = input("猜一个数：")   # 用户输入 7
+          if answer == 7:                # 永远为 False
+              print("猜对了")
+        why: |
+          input() 返回的是字符串 "7"，它和整数 7 不相等。
+          因为不报错，所以这类问题最难查——只能靠打印 type() 发现。
+        fix: |
+          answer = int(input("猜一个数："))   # 转换后再比较
+        search: 'python input 字符串 比较 不相等'
+
+      - symptom: |
+          0.1 + 0.2 == 0.3  的结果是 False
+        scene: |
+          print(0.1 + 0.2)        # 0.30000000000000004
+          print(0.1 + 0.2 == 0.3) # False
+        why: |
+          浮点数用二进制存储，0.1 和 0.2 都无法精确表示，相加后会有极小的误差。
+          这不是 Python 的问题，所有用 IEEE 754 的语言都一样。
+        fix: |
+          # 判断相等要给一个容差
+          abs((0.1 + 0.2) - 0.3) < 1e-9
+          # 需要精确计算时用 decimal.Decimal
+        search: 'python 0.1+0.2 不等于 0.3 浮点数精度'
+
+      - symptom: |
+          SyntaxError: invalid character '（' (U+FF08)
+        scene: |
+          print（"你好"）        # 用了中文括号
+        why: |
+          中文输入法下打出的括号、引号、冒号都是全角字符，Python 不认。
+          这类报错的位置常常看起来"完全正常"，因为肉眼分辨不出全角半角。
+        fix: |
+          print("你好")          # 切回英文输入法重打
+        search: 'SyntaxError invalid character U+FF08 python'
+
+      - symptom: |
+          NameError: name 'name' is not defined
+        scene: |
+          Name = "小明"
+          print(name)
+        why: |
+          Python 大小写敏感。Name 和 name 是两个完全不同的名字。
+        fix: |
+          name = "小明"      # 统一用小写加下划线命名
+          print(name)
+        search: 'NameError name is not defined 大小写'
 
   - id: py_str
     title: 字符串处理
     stage: 阶段一 · Python 与工程基础
     requires: [py_basic]
+    summary: 程序一半的时间在和文本打交道。这一节把切片、拆分、拼接、清洗练熟。
     skills:
-      - 索引与切片
-      - 常用方法：split / join / strip / replace / startswith
-      - f-string 与格式化
-      - 转义字符与原始字符串
+      - id: index
+        title: 索引（含负数下标）
+        what: s[0] 是第一个字符，s[-1] 是最后一个。越界会报 IndexError。
+        example: |
+          s = "python"
+          print(s[0], s[-1])
+        output: |
+          p n
+
+      - id: slice
+        title: 切片
+        what: s[a:b] 取下标 a 到 b-1，含头不含尾；还能加步长，或用 [::-1] 反转。
+        example: |
+          s = "python"
+          print(s[0:3])      # pyt
+          print(s[:3])       # 省略开头
+          print(s[3:])       # 省略结尾
+          print(s[::-1])     # 反转
+        output: |
+          pyt
+          pyt
+          hon
+          nohtyp
+        note: 切片越界不报错，超出部分直接忽略——这和单字符索引不一样。
+
+      - id: methods
+        title: 大小写与清洗
+        what: upper / lower 转大小写；strip 去两端空白；replace 替换。
+        example: |
+          dirty = "  hello World \n"
+          print(dirty.strip().upper())
+          print("2026-10-26".replace("-", "/"))
+        output: |
+          HELLO WORLD
+          2026/10/26
+        note: strip() 不带参数只去两端的空格、换行、制表符，中间的不动。
+
+      - id: split
+        title: split 与 join
+        what: split 按分隔符拆成列表；join 把列表拼回字符串——一对相反的操作。
+        example: |
+          line = "张三,18,男"
+          parts = line.split(",")
+          print(parts)
+          print(" | ".join(parts))
+        output: |
+          ['张三', '18', '男']
+          张三 | 18 | 男
+        note: csv 这类文本全靠 split 解析。join 前面的字符串是「连接符」。
+
+      - id: find
+        title: 查找与判断
+        what: in 判断是否包含；find 返回位置（找不到返回 -1）；startswith / endswith 判断开头结尾。
+        example: |
+          s = "hello.py"
+          print(".py" in s)            # True
+          print(s.find("l"))           # 2
+          print(s.startswith("he"))    # True
+          print(s.endswith(".py"))     # True
+        output: |
+          True
+          2
+          True
+          True
+        note: 判断文件后缀、过滤日志行，startswith 和 endswith 比 in 更准确。
+
+      - id: escape
+        title: 转义字符与原始字符串
+        what: \n 换行、\t 制表符；字符串前加 r 让反斜杠失效，写 Windows 路径和正则时必用。
+        example: |
+          print("第一行\n第二行")
+          print(r"C:\new\test")     # 原始字符串，\n 不生效
+        output: |
+          第一行
+          第二行
+          C:\new\test
+        note: 不加 r 时 "C:\new\test" 里的 \n 会被当成换行，路径直接断掉。
+
+      - id: immutable
+        title: 字符串不可变
+        what: 所有「修改」字符串的方法都返回新字符串，原串永远不变。
+        example: |
+          s = "hello"
+          s.upper()          # 没有接收返回值，等于没做
+          print(s)
+          s = s.upper()      # 正确做法：把新字符串赋回去
+          print(s)
+        output: |
+          hello
+          HELLO
+        note: 忘记接收返回值是高频错误。列表的 sort() 会原地改，字符串的方法永远不会。
     acceptance:
       - 能从一段文本里提取需要的信息
       - 能说清切片 [a:b] 的取值边界（含头不含尾）
       - 能处理带空格、换行的脏数据
+      - 能用 split + join 做 csv 行的解析与重组
     project:
       name: 文本统计器
       note: 统计一段文本的词频、最长单词、平均词长
     pitfalls:
-      - 切片是「含头不含尾」，[0:3] 取的是前 3 个字符不是 4 个
-      - 字符串是不可变的，所有「修改」方法都返回新字符串，原串不变
-      - Windows 和 Linux 的回车符不同，读文件时 strip() 比裸比较更稳
+      - symptom: |
+          TypeError: 'str' object does not support item assignment
+        scene: |
+          s = "hello"
+          s[0] = "H"
+        why: |
+          字符串不可变。想改只能生成新字符串再整体赋值。
+        fix: |
+          s = "H" + s[1:]
+          # 或转列表改完再拼回：
+          t = list(s); t[0] = "H"; s = "".join(t)
+        search: 'TypeError str object does not support item assignment'
+
+      - symptom: |
+          切片越界不报错，但取值越界报错（反直觉，排查时容易绕晕）
+        scene: |
+          s = "abc"
+          print(s[0:100])    # abc   不报错
+          print(s[100])      # IndexError
+        why: |
+          切片的规则是「能取多少取多少」，单字符索引是「必须存在」。
+          两者规则不同，混着记就会困惑。
+        fix: |
+          取单个字符前先确认长度，或用 s[-1] 取末尾。
+        search: 'python 切片越界 不报错'
+
+      - symptom: |
+          strip 之后中间的空格还在，以为 strip 能去所有空格
+        scene: |
+          print("  a  b  ".strip())      # "a  b"
+        why: |
+          strip 只处理两端。名字叫 strip（剥掉外皮），不是 replace。
+        fix: |
+          print("  a  b  ".replace(" ", ""))    # "ab"
+        search: 'python strip 不能去除中间空格'
+
+      - symptom: |
+          split() 和 split(" ") 结果不一样，按空格拆出了空字符串
+        scene: |
+          print("a  b".split(" "))    # ['a', '', 'b']
+          print("a  b".split())       # ['a', 'b']
+        why: |
+          带参数时严格按参数切，连续空格会产生空字符串；
+          不带参数按「任意空白」切并自动忽略连续空白。
+        fix: |
+          处理用户输入和日志，优先用不带参数的 split()。
+        search: 'python split 连续空格 空字符串'
 
   - id: py_container
     title: 数据容器（列表 / 元组 / 字典 / 集合）
     stage: 阶段一 · Python 与工程基础
     requires: [py_basic]
+    summary: 四种容器各有分工——要顺序用 list，要查表用 dict，要不重复用 set，要不可变用 tuple。
     skills:
-      - list 的增删改查与排序
-      - tuple 的不可变性
-      - dict 的键值访问与遍历
-      - set 的去重与集合运算
-      - 四者之间的相互转换
+      - id: list
+        title: 列表的增删改查
+        what: append 尾部加、insert 指定位置插、remove 按值删、pop 按下标删。
+        example: |
+          nums = [3, 1, 2]
+          nums.append(4)        # [3, 1, 2, 4]
+          nums.insert(0, 0)     # [0, 3, 1, 2, 4]
+          nums.remove(3)        # 按值删第一个 3
+          last = nums.pop()     # 弹出末尾
+          print(nums, last)
+        output: |
+          [0, 1, 2] 4
+        note: remove 只删第一个匹配值；要按下标删用 pop(i) 或 del nums[i]。
+
+      - id: sort
+        title: 排序：sort 与 sorted
+        what: nums.sort() 原地排序返回 None；sorted(nums) 返回新列表不动原数据。
+        example: |
+          nums = [3, 1, 2]
+          print(sorted(nums))       # [1, 2, 3]
+          print(nums)               # [3, 1, 2]  原数据没变
+          nums.sort(reverse=True)   # 原地降序
+          print(nums)               # [3, 2, 1]
+        output: |
+          [1, 2, 3]
+          [3, 1, 2]
+          [3, 2, 1]
+        note: '按某个字段排用 key 参数：sorted(students, key=lambda s: s["score"])。'
+
+      - id: tuple
+        title: 元组
+        what: 和列表像，但创建后不能增删改。适合存「一组固定搭配」，比如坐标、 RGB。
+        example: |
+          point = (3, 5)
+          x, y = point          # 解包
+          print(x, y)
+          print(point[0])
+        output: |
+          3 5
+          3
+        note: 只有一个元素要写 (3,) 带逗号，(3) 只是数字 3 加了括号。
+
+      - id: dict
+        title: 字典的增删改查
+        what: 键值对结构，按键查值是 O(1)。取值用 get 能避免 KeyError。
+        example: |
+          user = {"name": "小明", "age": 18}
+          user["city"] = "杭州"          # 新增
+          user["age"] = 19               # 修改
+          print(user.get("phone"))       # None，键不存在也不报错
+          print(user.get("phone", "未填"))
+        output: |
+          None
+          未填
+        note: 直接 user["phone"] 在键不存在时会抛 KeyError，读不确定的键一律用 get。
+
+      - id: dict_iter
+        title: 字典的遍历
+        what: .items() 同时拿键和值；.keys() / .values() 只拿其一。
+        example: |
+          scores = {"语文": 90, "数学": 85}
+          for subject, score in scores.items():
+              print(subject, score)
+          print(sum(scores.values()))
+        output: |
+          语文 90
+          数学 85
+          175
+
+      - id: set
+        title: 集合：去重与运算
+        what: set 里的元素不重复；交并差运算是一行代码的事。
+        example: |
+          tags = ["python", "web", "python"]
+          print(set(tags))                     # 去重
+          a = {1, 2, 3}
+          b = {2, 3, 4}
+          print(a & b, a | b, a - b)           # 交、并、差
+        output: |
+          {'python', 'web'}
+          {2, 3} {1, 2, 3, 4} {1}
+        note: set 无序且不能按下标取值；要有序去重用 sorted(set(x))。
+
+      - id: comprehension
+        title: 推导式
+        what: 一行代码完成「遍历 + 过滤 + 变换」，列表、字典、集合都有推导式。
+        example: |
+          nums = [1, 2, 3, 4, 5]
+          squares = [x * x for x in nums if x % 2 == 1]
+          print(squares)
+          prices = {"苹果": 5, "香蕉": 3}
+          print({k: v * 2 for k, v in prices.items()})
+        output: |
+          [1, 9, 25]
+          {'苹果': 10, '香蕉': 6}
+        note: 嵌套超过两层就不要用推导式了，换成普通 for 更好读。
+
+      - id: convert
+        title: 相互转换
+        what: list() / tuple() / set() / dict() 互转；dict() 还能从「成对序列」创建。
+        example: |
+          print(list("abc"))              # ['a', 'b', 'c']
+          print(dict([("a", 1), ("b", 2)]))
+          print(list({1: "x", 2: "y"}))   # 默认只拿键
+        output: |
+          ['a', 'b', 'c']
+          {'a': 1, 'b': 2}
+          [1, 2]
     acceptance:
       - 能按场景选对容器：要顺序用 list，要查表用 dict，要去重用 set
       - 能遍历字典并同时拿到键和值
       - 能用列表推导式代替简单的 for 循环
+      - 能解释为什么 b = a 之后改 b 会连 a 一起变
     project:
       name: 通讯录（内存版）
       note: 用 dict 存联系人，支持增删改查，不做持久化
     pitfalls:
-      - 遍历列表时删除元素会漏掉元素 —— 要遍历副本或倒序删
-      - dict 的键必须可哈希，list 不能当键
-      - list 赋值是引用不是拷贝，b = a 之后改 b 会连 a 一起改
-      - set 是无序的，不要依赖它的输出顺序
+      - symptom: |
+          改了 b，a 也跟着变（没有任何报错，结果却不对）
+        scene: |
+          a = [1, 2, 3]
+          b = a
+          b.append(4)
+          print(a)        # [1, 2, 3, 4]
+        why: |
+          赋值传的是引用，a 和 b 指向同一个列表，像同一间房的两把钥匙。
+        fix: |
+          b = a.copy()             # 浅拷贝
+          # 嵌套列表要用 copy.deepcopy(a)
+        search: 'python 列表赋值 引用 浅拷贝 深拷贝'
+
+      - symptom: |
+          RuntimeError: dictionary changed size during iteration
+        scene: |
+          d = {"a": 1, "b": 2}
+          for k in d:
+              if d[k] == 1:
+                  del d[k]
+        why: |
+          遍历时不能改变字典的大小，Python 会直接拦下。
+        fix: |
+          for k in list(d.keys()):     # 遍历键的副本
+              if d[k] == 1:
+                  del d[k]
+        search: 'RuntimeError dictionary changed size during iteration'
+
+      - symptom: |
+          TypeError: unhashable type: 'list'
+        scene: |
+          d = {[1, 2]: "坐标"}
+        why: |
+          字典的键必须可哈希（不可变）。list 和 dict 都不能当键，tuple 可以。
+        fix: |
+          d = {(1, 2): "坐标"}
+        search: 'TypeError unhashable type list 字典键'
+
+      - symptom: |
+          排序之后拿到的是 None
+        scene: |
+          nums = [3, 1, 2]
+          nums = nums.sort()
+          print(nums)        # None
+        why: |
+          .sort() 是原地排序，返回值是 None，赋回去把列表覆盖没了。
+        fix: |
+          nums.sort()                # 直接调用
+          # 或
+          nums = sorted(nums)        # 要新列表时用 sorted
+        search: 'python sort 返回 None'
 
   - id: py_flow
     title: 条件与循环
     stage: 阶段一 · Python 与工程基础
     requires: [py_basic]
+    summary: 让程序会做判断、会重复干活。写对的前提是搞清楚缩进和真假判断。
     skills:
-      - if / elif / else 与缩进规则
-      - for 与 while 的选用
-      - break / continue / else 子句
-      - range 与 enumerate / zip
+      - id: if
+        title: if / elif / else
+        what: 按条件走不同的分支。elif 可以有多个，else 兜底，可以没有。
+        example: |
+          score = 76
+          if score >= 90:
+              print("优秀")
+          elif score >= 60:
+              print("及格")
+          else:
+              print("不及格")
+        output: |
+          及格
+        note: 冒号后的代码块必须缩进，同一代码块的缩进量必须完全一致。
+
+      - id: compare
+        title: 比较与逻辑运算
+        what: == 等于、!= 不等于、> < >= <=；多个条件用 and / or / not 连接。
+        example: |
+          age = 20
+          print(age >= 18 and age < 60)   # 两个都成立才为 True
+          print(age < 18 or age > 65)     # 有一个成立即为 True
+          print(not age < 18)             # 取反
+        output: |
+          True
+          False
+          True
+        note: = 是赋值，== 才是比较。写成 if x = 5 会直接报语法错误。
+
+      - id: ternary
+        title: 三元表达式
+        what: 「值A if 条件 else 值B」，把简单的二选一写成一行。
+        example: |
+          score = 76
+          level = "及格" if score >= 60 else "不及格"
+          print(level)
+        output: |
+          及格
+        note: 只适合简单场景。逻辑一复杂就退回正常的 if，可读性优先。
+
+      - id: for
+        title: for 循环与 range
+        what: for 用来遍历序列。range(n) 生成 0 到 n-1 的整数序列。
+        example: |
+          for i in range(3):
+              print(i, end=" ")
+          print()
+          for i in range(1, 6, 2):    # 从 1 到 5，步长 2
+              print(i, end=" ")
+        output: |
+          0 1 2
+          1 3 5
+        note: range(1, 6) 是含头不含尾，5 取不到——和切片同一个规则。
+
+      - id: while
+        title: while 循环
+        what: 条件成立就一直执行，适合「不知道要循环几次」的场景。
+        example: |
+          n = 1
+          while n <= 3:
+              print(n, end=" ")
+              n = n + 1
+        output: |
+          1 2 3
+        note: 循环体内必须有让条件趋向 False 的语句，否则死循环（Ctrl+C 中断）。
+
+      - id: break
+        title: break / continue / else
+        what: break 跳出整个循环；continue 跳过本轮；循环的 else 在「没被 break」时执行。
+        example: |
+          for n in [3, 7, 9, 4]:
+              if n % 2 == 0:
+                  print("找到偶数", n)
+                  break
+          else:
+              print("没有偶数")
+        output: |
+          找到偶数 9
+        note: for...else 的 else 极少用但面试爱问——被 break 跳出时 else 不执行。
+
+      - id: enum
+        title: enumerate 与 zip
+        what: enumerate 同时拿下标和值；zip 把多条序列按位置配对。
+        example: |
+          names = ["甲", "乙", "丙"]
+          scores = [90, 85, 77]
+          for i, name in enumerate(names, start=1):
+              print(i, name)
+          for name, score in zip(names, scores):
+              print(name, score)
+        output: |
+          1 甲
+          2 乙
+          3 丙
+          甲 90
+          乙 85
+          丙 77
+        note: 需要下标时用 enumerate，不要自己写 i = i + 1。
+
+      - id: pass
+        title: pass 占位
+        what: pass 什么都不做，纯粹为了让「空代码块」在语法上合法。
+        example: |
+          def todo():
+              pass          # 先占位，以后再写
+        note: Python 不允许空的代码块，没有 pass 会报 IndentationError。
     acceptance:
       - 能写出嵌套两层以内的判断逻辑
       - 能说清 for...else 的 else 什么时候执行
       - 能用 enumerate 代替手动维护下标
+      - 能不看资料写出九九乘法表（双层循环）
     project:
       name: 命令行猜数字
       note: 随机生成一个数，循环猜测并给出大小提示，猜中后统计次数
     pitfalls:
-      - Python 用缩进划分代码块，混用 Tab 和空格会直接报错
-      - while 忘了让条件变化会死循环 —— Ctrl+C 可以中断
-      - 循环里改了列表长度，结果和预期完全不同
+      - symptom: |
+          IndentationError: expected an indented block
+          或  TabError: inconsistent use of tabs and spaces in indentation
+        scene: |
+          if score >= 60:
+          print("及格")        # 冒号后没有缩进
+        why: |
+          Python 用缩进划分代码块，别的语言用大括号。
+          冒号后必须缩进；混用 Tab 和空格时肉眼看是齐的，Python 认为不齐。
+        fix: |
+          编辑器设置里把 Tab 键设为「插入 4 个空格」，
+          出问题时用编辑器的「显示空白字符」找出混入的 Tab。
+        search: 'IndentationError expected an indented block Tab 空格'
+
+      - symptom: |
+          条件永远成立（比 if x == 1 or 2 更隐蔽的写法错误）
+        scene: |
+          x = 5
+          if x == 1 or 2:
+              print("总是进到这里")
+        why: |
+          x == 1 or 2 被解析成 (x == 1) or (2)。
+          非 0 数字本身为真，所以 2 恒为 True，整个条件永远成立。
+        fix: |
+          if x == 1 or x == 2:
+          # 或者
+          if x in (1, 2):
+        search: 'python if x == 1 or 2 永远为真'
+
+      - symptom: |
+          程序卡住不动，CPU 占用飙升（死循环）
+        scene: |
+          n = 10
+          while n > 0:
+              print(n)        # 忘了写 n = n - 1
+        why: |
+          循环条件永远为 True。IDE 里点停止即可；终端里 Ctrl+C 中断。
+        fix: |
+          确认循环体内有让条件变化的语句；
+          保险写法是加一个计数上限，超过就 break。
+        search: 'python while 死循环 中断'
+
+      - symptom: |
+          遍历列表删除元素后，结果漏删或报 IndexError
+        scene: |
+          nums = [1, 2, 2, 3, 2]
+          for x in nums:
+              if x == 2:
+                  nums.remove(x)
+          print(nums)      # [1, 3, 2]  有残留
+        why: |
+          遍历时删除会改变列表长度，下标发生偏移，循环跳过了后面的元素。
+        fix: |
+          nums = [x for x in nums if x != 2]      # 推导式新建
+          # 或遍历副本：for x in nums[:]:
+        search: 'python 遍历列表 删除元素 漏删'
+
+      - symptom: |
+          SyntaxError: invalid syntax（在 if 行）
+        scene: |
+          if x = 5:          # 用了赋值号
+              print("五")
+        why: |
+          = 是赋值，== 才是判断相等。Python 在 if 里不允许赋值。
+        fix: |
+          if x == 5:
+        search: 'SyntaxError invalid syntax if 赋值'
 
   # ===========================================================================
   #  组织代码：从「一个文件」到「一个项目」
@@ -178,24 +759,153 @@ nodes:
     title: 函数
     stage: 阶段一 · Python 与工程基础
     requires: [py_flow, py_container]
+    summary: 把重复逻辑收拢成一个名字。参数怎么传、值怎么回来，是这一节的全部重点。
     skills:
-      - 定义与调用、参数与返回值
-      - 位置参数、关键字参数、默认值
-      - 可变参数 *args / **kwargs
-      - 作用域与 LEGB 规则
-      - 类型注解写法
+      - id: define
+        title: 定义与调用
+        what: def 起头、冒号、缩进的函数体；调用时才执行。
+        example: |
+          def greet(name):
+              return f"你好，{name}"
+
+          print(greet("小明"))
+        output: |
+          你好，小明
+        note: 只写 def 不调用，函数体一行都不会执行。
+
+      - id: params
+        title: 参数：位置、关键字、默认值
+        what: 按位置传参要记顺序；关键字传参不看顺序；默认值让参数可选。
+        example: |
+          def power(base, exp=2):
+              return base ** exp
+
+          print(power(3))            # 用默认 exp
+          print(power(3, exp=3))     # 关键字传参
+        output: |
+          9
+          27
+        note: 默认值参数必须放在必填参数后面，否则报语法错误。
+
+      - id: args
+        title: "*args 与 **kwargs"
+        what: "*args 收集多余的位置参数成元组，**kwargs 收集多余的关键字参数成字典。"
+        example: |
+          def show(*args, **kwargs):
+              print(args)
+              print(kwargs)
+
+          show(1, 2, name="小明", age=18)
+        output: |
+          (1, 2)
+          {'name': '小明', 'age': 18}
+        note: 常见于「包装别的函数」的场景，先接住所有参数再原样转发。
+
+      - id: return
+        title: 返回值与多值返回
+        what: 没 return 的函数返回 None；return 多个值实际返回一个元组。
+        example: |
+          def min_max(nums):
+              return min(nums), max(nums)
+
+          lo, hi = min_max([3, 1, 4])
+          print(lo, hi)
+        output: |
+          1 4
+        note: 解包时变量数量要和返回值数量一致，不一致会报 ValueError。
+
+      - id: scope
+        title: 作用域
+        what: 函数内赋值创建的是局部变量；读外层变量可以，改全局变量要 global。
+        example: |
+          count = 0
+
+          def add():
+              global count      # 不声明这行，下一句会报错
+              count += 1
+
+          add()
+          print(count)
+        output: |
+          1
+        note: 「读」外层变量不需要 global，「改」才需要。更好的设计是通过参数传入、用返回值带回。
+
+      - id: lambda
+        title: lambda 匿名函数
+        what: 一行的小函数，通常作为排序的 key 或一次性回调。
+        example: |
+          students = [("小明", 90), ("小红", 85)]
+          students.sort(key=lambda s: s[1], reverse=True)
+          print(students)
+        output: |
+          [('小明', 90), ('小红', 85)]
+        note: 只能写一个表达式。逻辑超过一行就老老实实 def。
+
+      - id: annotate
+        title: 类型注解
+        what: 参数和返回值标注类型，编辑器提示和排错都靠它。不强制，但现代 Python 项目标配。
+        example: |
+          def add(a: int, b: int) -> int:
+              return a + b
+
+          def greet(name: str) -> str:
+              return f"你好，{name}"
+        note: 注解不会限制运行时的类型，传错不报错——它是写给人和工具看的。
     acceptance:
       - 能把一段重复代码抽成函数
       - 能一眼看出一个函数该不该拆（超过一屏就该拆）
       - 能写出带类型注解和 docstring 的函数
+      - 能解释可变默认参数为什么危险
     project:
       name: 把猜数字改造成函数版
       note: 拆成生成答案、判断猜测、统计次数几个函数，主流程只做编排
     pitfalls:
-      - 默认参数不要用可变对象（如 def f(x=[])），会跨调用累积
-      - 函数里改全局变量要声明 global，但更好的做法是不要改
-      - 返回多个值其实返回的是一个元组，接收时要对应
-      - 函数名要有动词，func1 / test 这种名字一周后自己都看不懂
+      - symptom: |
+          第二次调用时，默认参数里"残留"了上一次的数据
+        scene: |
+          def add_item(item, items=[]):
+              items.append(item)
+              return items
+
+          print(add_item(1))
+          print(add_item(2))       # [1, 2]  而不是 [2]
+        why: |
+          默认值在**函数定义时只创建一次**，之后每次调用共享同一个列表。
+        fix: |
+          def add_item(item, items=None):
+              if items is None:
+                  items = []
+              items.append(item)
+              return items
+        search: 'python 可变默认参数 陷阱 mutable default argument'
+
+      - symptom: |
+          函数返回 None，调用处报 AttributeError 或打印出 None
+        scene: |
+          def calc(a, b):
+              result = a + b        # 忘了 return
+
+          print(calc(1, 2))         # None
+        why: |
+          没写 return（或只写 return 不带值），函数默认返回 None。
+        fix: |
+          def calc(a, b):
+              return a + b
+        search: 'python 函数 返回 None 忘了 return'
+
+      - symptom: |
+          UnboundLocalError: local variable 'count' referenced before assignment
+        scene: |
+          count = 0
+          def add():
+              count = count + 1
+        why: |
+          函数内出现了对 count 的赋值，Python 就把 count 当局部变量，
+          但右边又要先读它——还没赋值就读，报错。
+        fix: |
+          需要修改全局变量时声明 global count；
+          更好的做法：把 count 作为参数传入，用 return 带回新值。
+        search: 'UnboundLocalError referenced before assignment global'
 
   - id: py_module
     title: 模块与包
@@ -222,45 +932,272 @@ nodes:
     title: 文件读写
     stage: 阶段一 · Python 与工程基础
     requires: [py_str, py_func]
+    summary: 程序关掉后数据还在的唯一方式。编码问题是 Windows 上的头号坑。
     skills:
-      - open 与 with 上下文管理器
-      - 文本与二进制的区别
-      - 编码问题与 encoding 参数
-      - pathlib 处理路径
+      - id: with
+        title: open 与 with
+        what: open(路径, 模式) 打开文件；with 块结束自动关闭，不用手动 close。
+        example: |
+          with open("demo.txt", "w", encoding="utf-8") as f:
+              f.write("第一行\n")
+              f.write("第二行\n")
+        note: 模式 "w" 写、"r" 读、"a" 追加。**"w" 会直接清空已有内容**。
+
+      - id: read
+        title: 读文件
+        what: read() 一次全读；最常用的是直接 for 循环逐行读，内存友好。
+        example: |
+          with open("demo.txt", encoding="utf-8") as f:
+              for line in f:
+                  print(line.strip())
+        output: |
+          第一行
+          第二行
+        note: 每行末尾自带 \n，处理前先 strip()。
+
+      - id: append
+        title: 追加模式
+        what: '"a" 模式在文件末尾追加，不清空原有内容。'
+        example: |
+          with open("log.txt", "a", encoding="utf-8") as f:
+              f.write("新的一条记录\n")
+        note: 写日志用追加；重新生成报告用 "w"。
+
+      - id: encoding
+        title: encoding 参数
+        what: 打开文本文件时显式指定编码，Windows 上不加就是 GBK。
+        example: |
+          with open("data.txt", encoding="utf-8") as f:
+              content = f.read()
+        note: 记住这条规则：**自己写的文件一律 encoding="utf-8"**。
+
+      - id: notfound
+        title: 文件不存在
+        what: 读不存在的文件会抛 FileNotFoundError，读之前先判断或捕获。
+        example: |
+          import os
+          if os.path.exists("data.txt"):
+              print("存在")
+          else:
+              print("文件不存在")
+        output: |
+          文件不存在
+
+      - id: pathlib
+        title: pathlib 处理路径
+        what: 用 / 拼路径、.exists() 判断、.mkdir() 建目录，跨平台不用操心斜杠方向。
+        example: |
+          from pathlib import Path
+
+          out = Path("output") / "result.txt"
+          out.parent.mkdir(exist_ok=True)     # 父目录不存在就创建
+          out.write_text("内容", encoding="utf-8")
+          print(out.exists())
+        output: |
+          True
+        note: write_text / read_text 是 pathlib 提供的快捷方法，一行顶三行。
     acceptance:
       - 能用 with 读写文件而不手动 close
       - 遇到中文乱码能自己定位是编码问题
       - 能用 pathlib 拼接跨平台路径
+      - 能说出 "w" 和 "a" 的区别
     project:
       name: 词频统计（落盘版）
       note: 读取一个文本文件，统计词频，结果写成 CSV
     pitfalls:
-      - Windows 上默认编码是 GBK，读 UTF-8 文件不加 encoding="utf-8" 会乱码
-      - 忘记 close 会导致文件被占用 —— 用 with 就不用操心
-      - 写文件的路径不存在会报错，父目录要提前创建
-      - 路径别用字符串硬拼，Windows 用反斜杠、Linux 用正斜杠，用 pathlib 最稳
+      - symptom: |
+          UnicodeDecodeError: 'gbk' codec can't decode byte ...
+        scene: |
+          with open("data.txt") as f:      # 没指定编码
+              print(f.read())
+        why: |
+          Windows 上 open() 的默认编码是 GBK，而文件多半是 UTF-8 存的，
+          两边对不上就解码失败。这是 Windows 上最常见的报错之一。
+        fix: |
+          with open("data.txt", encoding="utf-8") as f:
+        search: "UnicodeDecodeError gbk codec can't decode"
+
+      - symptom: |
+          打开文件发现里面的旧数据全没了
+        scene: |
+          with open("log.txt", "w") as f:    # 想追加却用了 w
+              f.write("新记录")
+        why: |
+          "w" 模式在打开的一瞬间就清空整个文件。
+        fix: |
+          with open("log.txt", "a", encoding="utf-8") as f:
+        search: 'python open w 模式 清空文件'
+
+      - symptom: |
+          FileNotFoundError: [Errno 2] No such file or directory
+        scene: |
+          out = open("output/result.txt", "w")    # output 目录不存在
+        why: |
+          open 能创建文件，但**不能创建不存在的父目录**。
+        fix: |
+          from pathlib import Path
+          Path("output").mkdir(exist_ok=True)     # 先建目录
+        search: 'FileNotFoundError errno 2 父目录'
+
+      - symptom: |
+          路径里的 \n、\t 被当成转义字符，文件找不到
+        scene: |
+          open("C:\new\test.txt")     # \n 变成了换行
+        why: |
+          反斜杠在字符串里是转义前缀。\n 恰好是「换行」。
+        fix: |
+          open(r"C:\new\test.txt")            # 加 r 前缀
+          open("C:/new/test.txt")             # 或直接用正斜杠
+        search: 'python 路径 反斜杠 转义 raw string'
 
   - id: py_error
     title: 异常处理
     stage: 阶段一 · Python 与工程基础
     requires: [py_func]
+    summary: 程序总会遇到意外。会读报错、会接住报错，才算能独立排查问题。
     skills:
-      - try / except / else / finally
-      - 常见异常类型：ValueError / KeyError / FileNotFoundError
-      - 主动抛出 raise
-      - 自定义异常
+      - id: try
+        title: try / except 基础
+        what: 把可能出错的代码放进 try，出错后执行 except，程序不再直接崩掉。
+        example: |
+          try:
+              num = int("abc")
+          except ValueError:
+              print("请输入数字")
+        output: |
+          请输入数字
+
+      - id: specific
+        title: 捕获特定异常
+        what: except 后面写异常类型；多个 except 按顺序匹配；as e 拿到异常对象。
+        example: |
+          try:
+              d = {"a": 1}
+              print(d["b"] / 0)
+          except KeyError as e:
+              print("缺键", e)
+          except ZeroDivisionError:
+              print("除零")
+        output: |
+          缺键 'b'
+        note: 只捕「预期中会发生的异常」，写不出名字就先跑一遍看报什么错。
+
+      - id: finally
+        title: else 与 finally
+        what: else 在没出错时执行；finally 无论如何都执行，适合收尾（关文件、还连接）。
+        example: |
+          try:
+              print("尝试")
+          except ValueError:
+              print("出错")
+          else:
+              print("没出错才走这里")
+          finally:
+              print("总会执行")
+        output: |
+          尝试
+          没出错才走这里
+          总会执行
+
+      - id: raise
+        title: 主动抛出 raise
+        what: 数据不合法时主动抛异常，把问题拦在源头，而不是传到很远处才爆。
+        example: |
+          def set_age(age):
+              if age < 0:
+                  raise ValueError(f"年龄不能为负数，收到 {age}")
+              return age
+
+          set_age(-3)
+        output: |
+          Traceback (most recent call last):
+            ...
+          ValueError: 年龄不能为负数，收到 -3
+        note: 报错信息里带上实际收到的值，排查时能省半小时。
+
+      - id: custom
+        title: 自定义异常
+        what: 继承 Exception 写自己的异常类，业务错误一眼可辨。
+        example: |
+          class LoginError(Exception):
+              pass
+
+          def login(pwd):
+              if pwd != "123":
+                  raise LoginError("密码错误")
+
+          try:
+              login("abc")
+          except LoginError as e:
+              print("登录失败：", e)
+        output: |
+          登录失败： 密码错误
+
+      - id: traceback
+        title: 读懂 traceback
+        what: 从最后一行往上读：最后一行是异常类型和信息，上面是调用路径。
+        example: |
+          def inner():
+              return 1 / 0
+
+          def outer():
+              inner()
+
+          outer()
+        output: |
+          Traceback (most recent call last):
+            File "...", line 6, in <module>
+              outer()
+            File "...", line 4, in outer
+              inner()
+            File "...", line 2, in inner
+              return 1 / 0
+          ZeroDivisionError: division by zero
+        note: 排查顺序：先看最后一行的异常名 → 找到自己代码的文件名和行号 → 检查那一行。
     acceptance:
       - 能预判代码可能在哪里出错并加上处理
       - 能说清 except Exception 一把抓为什么不好
       - 报错时能自己读懂 traceback 的最后一行
+      - 能写出带有效信息的自定义异常
     project:
       name: 给命令行工具加健壮性
       note: 处理用户输入非法、文件不存在、类型转换失败三种情况
     pitfalls:
-      - 用 except: 吞掉所有异常，出错了还静默继续，排查时毫无线索
-      - 异常被吞掉后程序行为诡异，先 print 出来再决定怎么处理
-      - 读 traceback 要从最后一行往上读，最后一行才是真正的错误原因
-      - 自己抛异常时带上有用的信息，只写 raise Exception() 等于没写
+      - symptom: |
+          出错被静默吞掉，程序继续跑但结果不对，现场证据已丢失
+        scene: |
+          try:
+              risky()
+          except Exception:
+              pass
+        why: |
+          pass 把所有异常连痕迹一起抹掉，之后的问题无从查起。
+          这是被公认为最危险的写法之一。
+        fix: |
+          至少打印出来：
+          except Exception as e:
+              print("出错了：", e)
+          # 更好：只捕获你能处理的具体异常
+        search: 'python bare except 反模式'
+
+      - symptom: |
+          看不懂一整屏报错，不知道从哪下手
+        why: |
+          traceback 的阅读顺序是从下往上：最后一行是异常类型和说明，
+          中间是调用链，每段里 «File ..., line N» 才是自己代码的位置。
+        fix: |
+          排查三步：读最后一行 → 找第一个自己写的文件名 → 去看那一行。
+        search: 'python traceback 怎么读'
+
+      - symptom: |
+          抛出的异常只有一句 Exception，没有信息量
+        scene: |
+          raise Exception("出错了")
+        why: |
+          没说哪里错、收到了什么值，别人（三个月后的你）拿到这个报错毫无头绪。
+        fix: |
+          raise ValueError(f"非法的年龄值：{age!r}")
+        search: 'python raise 最佳实践 异常信息'
 
   - id: eng_venv
     title: 虚拟环境与依赖管理
