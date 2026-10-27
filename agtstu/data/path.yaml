@@ -30,22 +30,99 @@ nodes:
     title: 环境搭建与运行 Python
     stage: 阶段一 · Python 与工程基础
     requires: []
+    summary: 万事开头难，难在 PATH 和解释器。这一步走通，后面才有意义。
     skills:
-      - 安装 Python 并确认版本
-      - 从命令行运行 .py 文件
-      - 认识 pip 与 PATH 的作用
-      - 在编辑器里正确指定解释器
+      - id: install
+        title: 安装与版本检查
+        what: 从官网装 Python，安装时务必勾选 Add Python to PATH；装完用 --version 验证。
+        example: |
+          python --version
+          # Python 3.13.14
+
+          python -c "import sys; print(sys.executable)"
+          # C:\Users\你\AppData\Local\Programs\Python\Python313\python.exe
+        output: |
+          Python 3.13.14
+        note: 第二行打印解释器的真实路径，排错时比 --version 更有用。
+
+      - id: path
+        title: PATH 是什么
+        what: PATH 是一串目录。你在终端敲命令时，系统按顺序去这些目录里找同名程序。
+        example: |
+          # Windows
+          where python
+
+          # macOS / Linux
+          which python
+        note: 提示「不是内部或外部命令」，就是 PATH 里没有它——不是没装。
+
+      - id: run
+        title: 从命令行运行脚本
+        what: python 文件名.py 运行；相对路径按当前所在目录算。
+        example: |
+          cd D:\code\demo
+          python hello.py
+        note: 报 can't open file 说明当前目录不对，用 cd 切过去或给绝对路径。
+
+      - id: interpreter
+        title: 在编辑器里指定解释器
+        what: 编辑器需要知道用哪个 python.exe 来补全、检查和运行。选错就会出现「装了库却导入失败」。
+        example: |
+          # 查看当前文件用的是哪个解释器
+          import sys
+          print(sys.executable)
+        note: VS Code 看右下角，PyCharm 看 Settings → Project → Python Interpreter。
+
+      - id: relation
+        title: 解释器与虚拟环境的关系
+        what: 虚拟环境是一个文件夹，里面装着一份自己的 python.exe 和它自己的库。
+        example: |
+          D:\project\.venv\
+          ├── Scripts\python.exe      ← 这一份解释器
+          └── Lib\site-packages\      ← 这个项目独占的库
+        note: 配解释器时选 .venv\Scripts\python.exe，就是用「这个项目的厨房」。
     acceptance:
       - 终端里输入 python --version 能看到版本号
       - 能用 python 文件名.py 跑通一个脚本
       - 能说清「解释器」与「虚拟环境」是什么关系
+      - 能自己定位「命令找不到」是 PATH 问题还是没装
     project:
       name: 第一个脚本
       note: 写一个脚本，打印当前 Python 版本和解释器所在路径
     pitfalls:
-      - 装完 Python 但终端提示「不是内部或外部命令」—— PATH 没配好
-      - 编辑器里选了一个已不存在的解释器，报「解释器无效」—— 要指向真实的 python.exe
-      - 电脑上装了多个 Python 时，不加区分地用 python 命令可能跑到了另一个版本上
+      - symptom: |
+          'python' 不是内部或外部命令，也不是可运行的程序
+        scene: |
+          # Windows 终端里敲 python
+        why: |
+          装 Python 时没勾 Add Python to PATH，系统不知道去哪找它。
+        fix: |
+          重新运行安装包选 Modify → 勾选 Add Python to PATH；
+          或用绝对路径调用，或手动把安装目录加进环境变量。
+        search: 'python 不是内部或外部命令 PATH'
+
+      - symptom: |
+          编辑器里报「解释器无效」或「未配置 Python 解释器」
+        scene: |
+          # 项目从别的机器拷过来，或删过旧版 Python
+        why: |
+          项目里记着一个已经失效的解释器路径（比如原来的 Python 3.8 被卸载了）。
+          在 PyCharm 里会显示成红色的无效解释器。
+        fix: |
+          重新指向一个真实存在的 python.exe：
+          Windows 上 where python 查看可用路径，
+          新项目建议直接新建 .venv。
+        search: 'PyCharm 解释器无效 重新配置'
+
+      - symptom: |
+          代码忽好忽坏，明明同一个命令有时跑的是 3.9 有时是 3.13
+        scene: |
+          # 机器上装了多个 Python，PATH 里排在前面的那个先被找到
+        why: |
+          python 只是一个名字，指到哪个版本取决于 PATH 顺序和环境。
+        fix: |
+          用 where python 看清有几个；排错时打印 sys.executable 确认实际用的哪一个。
+        search: 'windows 多个 python 版本 冲突 顺序'
     resources:
       - title: Python 官方下载页
         url: https://www.python.org/downloads/
@@ -55,24 +132,127 @@ nodes:
     title: Git 与版本控制基础
     stage: 阶段一 · Python 与工程基础
     requires: []
+    summary: 提交不等于上传。这一节最容易搞混的就是「代码到底存在哪」。
     skills:
-      - 仓库、提交、远程三个概念的区别
-      - git init / add / commit / push 四步流程
-      - .gitignore 的作用与写法
-      - 看懂 git status 的输出
+      - id: concepts
+        title: 仓库、提交、远程
+        what: 提交是存进本机 .git 的快照；远程是另一份备份；push 才是把提交送过去。
+        example: |
+          git init                 # 当前目录变成仓库
+          git add .                # 放进暂存区（准备提交的清单）
+          git commit -m "说明"      # 拍快照，存进本机 .git
+          git push                 # 才真正上传到远程
+        note: 没有 push，换台电脑、硬盘坏了，提交就没了。
+
+      - id: status
+        title: 看懂 git status
+        what: 红色是未暂存的改动，绿色是已暂存待提交，untracked 是 Git 还没管的新文件。
+        example: |
+          git status --short
+
+          #  M app.py     已跟踪，有改动，未暂存
+          # M  app.py     已暂存，等待提交
+          # ?? new.py     新文件，Git 不认识
+        note: 提交前看一眼这个输出，能避免把不该提交的东西带上。
+
+      - id: gitignore
+        title: .gitignore
+        what: 排除虚拟环境、缓存、IDE 配置、密钥文件。写法是路径模式，一行一个。
+        example: |
+          .venv/
+          __pycache__/
+          *.pyc
+          .env
+          .idea/
+        note: / 结尾表示目录；! 开头表示反向包含。
+
+      - id: branch
+        title: 分支
+        what: 分支是一条独立的提交线。改功能开分支，改完合回 main，主分支始终可用。
+        example: |
+          git switch -c feature/login    # 新建并切换
+          git switch main                # 切回
+          git merge feature/login        # 合并
+        note: 单人小项目也可以不开分支，但 main 保持可运行是好习惯。
+
+      - id: remote
+        title: 远程与多仓库
+        what: 一个本地仓库可以关联多个远程，分别推送（比如 GitHub 主库 + Gitee 镜像）。
+        example: |
+          git remote add origin https://github.com/你/仓库.git
+          git remote add gitee  https://gitee.com/你/仓库.git
+
+          git push origin main
+          git push gitee main
+        note: 用 git remote -v 查看当前关联了哪些。
+
+      - id: log
+        title: log 与 diff
+        what: log 看提交历史，diff 看未提交的改动，show 看某一次提交改了什么。
+        example: |
+          git log --oneline -5
+          git diff                 # 工作区 vs 暂存区
+          git diff --cached        # 暂存区 vs 上次提交
+        note: 提交前 git diff 扫一眼，是性价比最高的自查动作。
     acceptance:
       - 能把一个本地目录变成 Git 仓库并完成首次提交
       - 能说清「提交之后代码存在哪」
       - 能写出一个 .gitignore 把虚拟环境排除掉
+      - 能配置两个远程并分别推送
     project:
       name: 把自己的练习目录纳入版本控制
       note: 给学习目录初始化 Git，按内容分批提交已有练习
     pitfalls:
-      - 以为 commit 就等于上传了 —— 其实只存在本机的 .git 目录里，push 才到远程
-      - 忘了写 .gitignore，把几百 MB 的虚拟环境整个提交进去，仓库直接膨胀
-      - 在平台上建仓库时勾选了自动生成 README，本地推送时冲突报 fetch first
-      - Gitee 的 HTTPS 推送不接受登录密码，只接受「私人访问令牌」
-      - IDE 的 deployment.xml、dataSources.xml 里可能存有账号密码，必须忽略 .idea 目录
+      - symptom: |
+          以为 commit 完就"上传"了，换台电脑发现代码不见了
+        scene: |
+          git add .
+          git commit -m "完成"
+          # 没有 git push
+        why: |
+          commit 只是在本机 .git 目录里记了一个快照，远程仓库什么都没收到。
+        fix: |
+          提交push 两步：git commit 之后必须 git push 才算同步到远程。
+        search: 'git commit 和 push 区别'
+
+      - symptom: |
+          ! [rejected] main -> main (fetch first)
+          error: failed to push some refs
+        scene: |
+          # 在 GitHub/Gitee 建仓库时勾选了「初始化 README」
+          git push origin main
+        why: |
+          远程已经有一个提交（自动生成的 README），本地历史里没有它，
+          Git 拒绝覆盖，怕你丢东西。
+        fix: |
+          两种选择：git pull --rebase 合并后再推；
+          或确认远程那个提交没用，直接 git push -f 覆盖。
+          下次建仓库时别勾任何初始化选项。
+        search: 'git push rejected fetch first 解决'
+
+      - symptom: |
+          remote: Incorrect username or password (access token)
+        scene: |
+          # Gitee 用登录密码做 HTTPS 推送
+        why: |
+          Gitee 和 GitHub 一样，Git 操作不接受登录密码，只接受「私人访问令牌」。
+          而且在账号设置里改过密码后，本地存的旧凭据还会继续尝试，表现就是一直失败。
+        fix: |
+          生成令牌（勾选 projects 权限），推送时密码栏填令牌；
+          或改用 SSH 密钥，一次配置永久免密。
+        search: 'Gitee 推送 Authentication failed access token'
+
+      - symptom: |
+          仓库里出现了账号密码（deployment.xml / dataSources.xml）
+        scene: |
+          git add .
+          # 把 .idea 目录一起提交了
+        why: |
+          JetBrains 系列 IDE 把 SFTP 部署账号和数据库连接串以明文存在 .idea 下。
+        fix: |
+          .gitignore 加 .idea/；已经提交的用 git rm -r --cached .idea，
+          并立刻修改涉及的密码——历史里删不干净。
+        search: 'idea 目录 提交 密码 泄露'
     resources:
       - title: Git 官方文档
         url: https://git-scm.com/book/zh/v2
@@ -911,22 +1091,122 @@ nodes:
     title: 模块与包
     stage: 阶段一 · Python 与工程基础
     requires: [py_func]
+    summary: 一个文件装不下时，怎么拆、怎么互相引用。拆错了会出现各种离奇的导入错误。
     skills:
-      - import 的几种写法
-      - __name__ == "__main__" 的作用
-      - 包与 __init__.py
-      - 标准库常用模块：os / pathlib / json / datetime
+      - id: import
+        title: import 的几种写法
+        what: import 模块；from 模块 import 名字；as 起别名。导入的是整个模块对象，不是复制。
+        example: |
+          import math
+          from math import sqrt
+          from datetime import datetime as dt
+
+          print(math.pi)
+          print(sqrt(16))
+          print(dt.now().year)
+        output: |
+          3.141592653589793
+          4.0
+          2026
+        note: from x import y 会把 y 直接放进当前命名空间，名字冲突时用 as 隔离。
+
+      - id: main
+        title: 模块被导入时会发生什么
+        what: import 一个模块会执行它的全部顶层代码。用 __name__ 判断可以区分「被导入」和「直接运行」。
+        example: |
+          def main():
+              print("作为程序运行")
+
+          if __name__ == "__main__":
+              main()
+        output: |
+          作为程序运行
+        note: 被别的文件 import 时 __name__ 是模块名，这段不会执行——测试代码和调试输出都该放进去。
+
+      - id: package
+        title: 包与 __init__.py
+        what: 一个文件夹加 __init__.py 就是一个包，可以按目录分层组织模块。
+        example: |
+          myapp/
+          ├── __init__.py       # 可以为空
+          ├── utils.py
+          └── api/
+              ├── __init__.py
+              └── routes.py
+        note: Python 3.3 以后没有 __init__.py 的目录也能导入（命名空间包），但显式写上更清楚。
+
+      - id: stdlib
+        title: 标准库常用模块
+        what: 不用安装就能 import。日常最常用的四个：pathlib 路径、json 数据、datetime 时间、os 环境。
+        example: |
+          import os
+          from pathlib import Path
+          from datetime import datetime
+
+          print(os.getenv("USERNAME") or os.getenv("USER"))
+          print(Path.cwd().name)
+          print(datetime.now().strftime("%Y-%m-%d"))
+        output: |
+          29397
+          agtstu
+          2026-10-27
+        note: 遇到「要处理 X」先查标准库，八成已经有现成的，不用装第三方包。
+
+      - id: path
+        title: 模块搜索路径
+        what: import 时按 sys.path 的次序查找：当前目录 → 环境变量 → 标准库 → site-packages。
+        example: |
+          import sys
+          for p in sys.path[:3]:
+              print(p)
+        output: |
+          （脚本所在目录）
+          （Python 安装目录）
+          （site-packages）
+        note: 装在虚拟环境里的包在 site-packages 下；「装好了却找不到」多半是找错了这个路径。
     acceptance:
       - 能把自己的代码拆成多个文件互相引用
       - 能解释为什么脚本里要写 if __name__ == "__main__"
       - 知道标准库在哪里查
+      - 遇到 ModuleNotFoundError 时，能判断是没装还是装错了环境
     project:
       name: 拆分成多文件的小工具
       note: 把文本统计器拆成 utils 模块 + 主入口文件
     pitfalls:
-      - 模块名和标准库重名（比如自己写 json.py）会导致诡异的导入错误
-      - 直接运行包内模块时相对导入会失败，要用 python -m 包.模块
-      - 修改了模块但程序没变化，多半是被 .pyc 缓存或没重启解释器
+      - symptom: |
+          ModuleNotFoundError: No module named 'json'
+          （明明 json 是标准库）
+        scene: |
+          # 自己在项目里建了一个 json.py 并 import json
+        why: |
+          当前目录在 sys.path 最前面，自己的 json.py 把标准库顶掉了。
+          更糟的是标准库内部或其他库 import json 时，拿到的也是你这个文件。
+        fix: |
+          改掉文件名（比如 my_json.py）。同理别叫 random.py、string.py、http.py、types.py。
+        search: 'ModuleNotFoundError 自己写的文件 覆盖 标准库'
+
+      - symptom: |
+          ImportError: attempted relative import with no known parent package
+        scene: |
+          # 直接运行包内的某个模块
+          python myapp/utils.py
+        why: |
+          用文件路径直接运行，这个文件不属于任何包，相对导入（from . import x）无从谈起。
+        fix: |
+          用模块方式运行：
+          python -m myapp.utils
+        search: 'attempted relative import with no known parent package'
+
+      - symptom: |
+          改了代码但运行结果没变
+        scene: |
+          # 修改了 utils.py，但主程序输出还是旧的
+        why: |
+          Python 会缓存编译结果（__pycache__）。正常情况下会自动失效，
+          但如果是长期运行的进程（Jupyter、服务端），模块已加载就不会重读。
+        fix: |
+          重启解释器；Jupyter 用 %autoreload；确认改的是当前运行的那份文件。
+        search: 'python 修改代码 没生效 pyc 缓存'
 
   - id: py_file
     title: 文件读写
@@ -1203,45 +1483,221 @@ nodes:
     title: 虚拟环境与依赖管理
     stage: 阶段一 · Python 与工程基础
     requires: [py_env, py_module]
+    summary: 让每个项目有自己的库，互不打架。「装好了却用不到」的问题九成出在这里。
     skills:
-      - 虚拟环境解决什么问题
-      - venv 的创建与激活
-      - pip install / freeze 与 requirements.txt
-      - pyproject.toml 的定位
+      - id: why
+        title: 为什么需要虚拟环境
+        what: 不同项目依赖不同版本。共用一套环境时，升级 A 项目的库会弄坏 B 项目。
+        example: |
+          # 项目 A 需要 requests 2.28
+          # 项目 B 需要 requests 2.31
+          # 共用一个环境时，只能二选一
+        note: 虚拟环境不是「更高级的用法」，而是 Python 项目的基本卫生习惯。
+
+      - id: create
+        title: 创建与激活
+        what: python -m venv 建环境；激活脚本按平台不同，Windows 在 Scripts 下，mac/Linux 在 bin 下。
+        example: |
+          # 创建
+          python -m venv .venv
+
+          # Windows PowerShell
+          .venv\Scripts\Activate.ps1
+
+          # macOS / Linux
+          source .venv/bin/activate
+        note: 激活成功后命令行前面会出现 (.venv)。退出用 deactivate。
+
+      - id: pip
+        title: pip 装包与查看
+        what: install 装、uninstall 卸、list 看已装、show 看详情。
+        example: |
+          python -m pip install requests
+          python -m pip list
+          python -m pip uninstall requests -y
+        note: 一律用 python -m pip，不要直接敲 pip——见下面第四条的坑。
+
+      - id: requirements
+        title: requirements.txt
+        what: pip freeze 导出当前环境的确切版本，别人 pip install -r 就能复现。
+        example: |
+          python -m pip freeze > requirements.txt
+          python -m pip install -r requirements.txt
+        note: 生成的清单会包含间接依赖；只想锁定直接依赖就手写一份。
+
+      - id: pyproject
+        title: pyproject.toml
+        what: 现代 Python 项目的标准配置：项目元信息、依赖、构建方式、工具配置都在这一个文件里。
+        example: |
+          [project]
+          name = "myapp"
+          version = "0.1.0"
+          requires-python = ">=3.9"
+          dependencies = ["requests>=2.28", "pyyaml>=6.0"]
+
+          [project.optional-dependencies]
+          dev = ["pytest>=7.0"]
+        note: 有了 pyproject.toml，一般就不需要再手写 setup.py。
     acceptance:
       - 能为一个项目建立独立虚拟环境并在其中装包
       - 能说清「为什么不能所有项目共用一个环境」
       - 能用 requirements.txt 让别人复现你的环境
+      - 能解释 python -m pip 比直接 pip 更可靠的原因
     project:
       name: 给自己的项目建环境
       note: 建虚拟环境、装一个第三方库、导出依赖清单、写进 README
     pitfalls:
-      - 忘记激活虚拟环境，包装到了全局 Python 上，换个项目就找不到
-      - 虚拟环境目录一定要写进 .gitignore，否则仓库瞬间膨胀
-      - 直接在项目里堆 pip install 而不记录依赖，换台机器就复现不出来
-      - Python 建虚拟环境时会自动在里面放一个内容为 * 的 .gitignore，所以它本来就会被 Git 忽略
+      - symptom: |
+          ModuleNotFoundError: No module named 'requests'
+          （明明刚刚 pip install 过）
+        scene: |
+          # 在 A 环境装包，在 B 环境运行代码
+        why: |
+          装包用的解释器和运行代码用的解释器不是同一个。
+          编辑器左下角选的是 .venv，终端的 pip 却装到了系统 Python 里；
+          或者忘了激活虚拟环境，装到了全局。
+        fix: |
+          两步确认：python -c "import sys; print(sys.executable)" 看清当前解释器；
+          然后用同一个解释器装包：<该路径> -m pip install requests
+        search: 'pip install 成功 ModuleNotFoundError 解释器不匹配'
+
+      - symptom: |
+          Fatal error in launcher: Unable to create process using ...
+        scene: |
+          pip install xxx      # 直接敲 pip
+        why: |
+          机器上装过多个 Python，pip.exe 里写死的解释器路径已经失效或指向别处。
+        fix: |
+          改用 python -m pip install xxx —— 它保证「当前这个 Python 的 pip」。
+        search: 'Fatal error in launcher Unable to create process pip'
+
+      - symptom: |
+          仓库体积突然几十上百 MB，clone 很慢
+        scene: |
+          git add .        # 把 .venv 一起提交了
+        why: |
+          虚拟环境里有几万个文件（含解释器副本和所有库）。
+        fix: |
+          .gitignore 里加 .venv/ venv/；已经提交过的要 git rm -r --cached .venv
+        search: 'git 提交了 venv 仓库变大 怎么移除'
 
   - id: eng_struct
     title: 项目结构组织
     stage: 阶段一 · Python 与工程基础
     requires: [py_module, eng_venv]
+    summary: 从「一堆脚本」到「一个项目」。结构定下来，后面加功能才不会越来越乱。
     skills:
-      - 一个 Python 项目该有哪些文件
-      - 包布局与扁平布局的区别
-      - README / LICENSE / 依赖声明 / 测试目录的位置
-      - 配置与代码分离（环境变量）
+      - id: skeleton
+        title: 最小项目骨架
+        what: 包 + 测试 + README + 依赖声明 + 许可证，这五样齐了就算一个正经项目。
+        example: |
+          myapp/
+          ├── myapp/              # 源代码包
+          │   ├── __init__.py
+          │   └── core.py
+          ├── tests/              # 测试
+          │   └── test_core.py
+          ├── README.md           # 别人第一个看的东西
+          ├── pyproject.toml      # 依赖声明
+          ├── LICENSE             # 许可证
+          └── .gitignore
+        note: 名字对了，别人 clone 下来就知道从哪看起。
+
+      - id: layout
+        title: 包布局与扁平布局
+        what: 包布局把代码放进同名子目录（myapp/myapp/），避免和项目根的其他文件混在一起。
+        example: |
+          # 包布局（推荐，能被打包安装）
+          myapp/myapp/core.py
+
+          # 扁平布局（简单脚本够用）
+          myapp/core.py
+        note: 一旦要 pip install 或发布，包布局更省事。
+
+      - id: readme
+        title: README 该写什么
+        what: 五段就够：这是什么、解决什么问题、怎么装、怎么用、许可证。
+        example: |
+          # 项目名
+          > 一句话说明它是什么
+
+          ## 安装
+          pip install -r requirements.txt
+
+          ## 使用
+          python -m myapp --help
+
+          ## 许可证
+          MIT
+        note: 判断标准很简单：别人只看 README 能不能跑起来。
+
+      - id: config
+        title: 配置与代码分离
+        what: 数据库地址、密钥、开关这类会变的东西放环境变量或配置文件，不要写死在代码里。
+        example: |
+          import os
+          from pathlib import Path
+
+          DB_URL = os.getenv("DB_URL", "sqlite:///local.db")
+          DEBUG = os.getenv("DEBUG", "0") == "1"
+        note: 同一份代码要能跑在开发机、测试环境和服务器上，区别只在配置。
+
+      - id: gitignore
+        title: .gitignore
+        what: 告诉 Git 哪些东西不要提交：虚拟环境、缓存、IDE 配置、密钥文件。
+        example: |
+          .venv/
+          __pycache__/
+          *.pyc
+          .pytest_cache/
+          .env
+          .idea/
+          .vscode/*
+          !.vscode/settings.json
+        note: 已经提交过才发现，要用 git rm -r --cached <路径> 从索引里移除。
     acceptance:
       - 能从零搭出一个含「包 + 测试 + README + 依赖声明」的项目骨架
       - 能说清每个顶层文件是干什么用的
       - 别人 clone 下来能按 README 跑起来
+      - 能解释为什么 .idea 目录不该提交
     project:
       name: 按规范重建自己的练习项目
       note: 把散落的练习脚本整理成一个有结构的项目
     pitfalls:
-      - 所有代码堆在根目录，超过 5 个文件就找不到东西了
-      - 密钥、API Key 直接写在代码里 —— 要用环境变量，且 .env 必须进 .gitignore
-      - 测试代码和业务代码混在一起，后来自己都分不清哪个是哪个
-      - README 只写「这是我的项目」，别人完全不知道怎么跑
+      - symptom: |
+          密钥、数据库密码出现在公开仓库里
+        scene: |
+          # 直接提交了整个 .idea 目录
+          .idea/deployment.xml      # 存着 SFTP 账号密码
+          .idea/dataSources.xml     # 存着数据库连接串
+        why: |
+          IDE 会把部署配置和数据库连接保存成明文 XML，里面很可能带账号密码。
+          这类文件默认就在项目目录下，git add . 会一并带上。
+        fix: |
+          .gitignore 加 .idea/；
+          已经提交过的要 git rm -r --cached .idea 并立即改密码。
+        search: 'idea deployment.xml 密码 提交 泄露'
+
+      - symptom: |
+          项目超过 5 个文件后，自己都找不到东西
+        scene: |
+          project/
+          ├── test1.py  test2.py  test3.py
+          ├── utils.py  my_utils.py  utils2.py
+          └── main.py
+        why: |
+          没有目录分层，所有文件平铺在根目录，命名也逐渐失控。
+        fix: |
+          按职责分目录：源码进包、测试进 tests/、脚本进 scripts/、数据进 data/。
+        search: 'python 项目结构 最佳实践 目录'
+
+      - symptom: |
+          README 只有一句「这是我的项目」，别人完全不知道怎么跑
+        why: |
+          作者默认「大家都知道」，但读者面对的是一个陌生仓库。
+        fix: |
+          至少补齐：怎么装依赖、从哪个命令开始、需要什么前置条件（Python 版本、环境变量）。
+        search: 'README 模板 python 项目'
 
   # ===========================================================================
   #  工程入门：连上外部世界
@@ -1251,69 +1707,382 @@ nodes:
     title: JSON 与数据交换
     stage: 阶段一 · Python 与工程基础
     requires: [py_container, py_file]
+    summary: 几乎所有 API 和配置文件都用 JSON。四个函数，两组区别，别用混。
     skills:
-      - JSON 与 Python 数据结构的对应关系
-      - json.loads / dumps 与 load / dump 的区别
-      - 嵌套结构与安全取值
-      - 中文编码处理
+      - id: mapping
+        title: JSON 与 Python 类型对应
+        what: 对象→dict、数组→list、字符串→str、数字→int/float、true/false→True/False、null→None。
+        example: |
+          import json
+          data = json.loads('{"ok": true, "n": null, "items": [1, 2]}')
+          print(data["ok"], data["n"], data["items"])
+          print(type(data["ok"]))
+        output: |
+          True None [1, 2]
+          <class 'bool'>
+        note: JSON 里写 true / false / null，Python 里是 True / False / None，大小写别搞反。
+
+      - id: loads
+        title: loads 与 dumps（处理字符串）
+        what: loads 把 JSON 字符串解析成对象；dumps 把对象序列化成字符串。带 s 的是 string。
+        example: |
+          import json
+          obj = {"名称": "测试", "值": 42}
+          text = json.dumps(obj, ensure_ascii=False)
+          print(text)
+          print(json.loads(text)["值"])
+        output: |
+          {"名称": "测试", "值": 42}
+          42
+        note: ensure_ascii=False 才不会把中文变成 \u540d\u79f0 这样的一串转义。
+
+      - id: load
+        title: load 与 dump（处理文件）
+        what: load 从文件对象读，dump 写到文件对象。不带 s 的是 file。
+        example: |
+          import json
+
+          with open("config.json", "w", encoding="utf-8") as f:
+              json.dump({"debug": True}, f, ensure_ascii=False, indent=2)
+
+          with open("config.json", encoding="utf-8") as f:
+              cfg = json.load(f)
+          print(cfg)
+        output: |
+          {'debug': True}
+        note: 记法：多一个 s 就是多处理一步「字符串」。
+
+      - id: nested
+        title: 嵌套结构与安全取值
+        what: 多层嵌套时逐层用 get，缺字段也不会崩。
+        example: |
+          data = {"user": {"profile": {"city": "杭州"}}}
+
+          print(data["user"]["profile"]["city"])
+          print(data.get("user", {}).get("profile", {}).get("job", "未知"))
+        output: |
+          杭州
+          未知
+        note: 直接 chain 取值的写法，中间任何一层缺失都会抛 KeyError。
+
+      - id: format
+        title: 输出格式控制
+        what: indent 控制缩进便于阅读，sort_keys 按键排序，separators 压缩体积。
+        example: |
+          import json
+          obj = {"b": 2, "a": 1}
+          print(json.dumps(obj, indent=2, sort_keys=True))
+          print(json.dumps(obj, separators=(",", ":")))
+        output: |
+          {
+            "a": 1,
+            "b": 2
+          }
+          {"b":2,"a":1}
+        note: 给人看用 indent，给机器传（请求体积敏感）用紧凑格式。
     acceptance:
       - 能把 JSON 字符串解析成 dict 并取出嵌套字段
       - 能区分「读文件」和「解析字符串」两组函数
       - 能处理字段缺失的情况而不崩溃
+      - 能解释 ensure_ascii=False 的作用
     project:
       name: 解析一份公开数据
       note: 读一个 JSON 文件，提取需要的字段，输出成可读的表格
     pitfalls:
-      - json.load 读文件、json.loads 解析字符串，用混了会报奇怪的错
-      - JSON 的 true/false/null 映射到 Python 是 True/False/None，手写时容易混
-      - 直接 result["a"]["b"]["c"] 取值，中间缺一层就抛 KeyError，用 .get() 更稳
-      - 写中文时 ensure_ascii=False 才不会变成一串转义字符
+      - symptom: |
+          AttributeError: 'str' object has no attribute 'read'
+          或 TypeError: the JSON object must be str, bytes or bytearray
+        scene: |
+          text = '{"a": 1}'
+          json.load(text)          # 用错了：load 要文件对象
+        why: |
+          load / dump 面向文件对象，loads / dumps 面向字符串。
+          两者用混的报错看起来都跟 JSON 无关，容易绕远。
+        fix: |
+          json.loads(text)               # 处理字符串
+          with open(...) as f: json.load(f)   # 处理文件
+        search: 'json.load json.loads 区别 AttributeError str object has no attribute read'
+
+      - symptom: |
+          写出去的中文全变成了 \u5f20\u4e09 这样
+        scene: |
+          json.dumps({"名字": "张三"})
+        why: |
+          dumps 默认 ensure_ascii=True，非 ASCII 字符一律转义成 \uXXXX。
+          功能上没错，但人看不懂、文件也变大。
+        fix: |
+          json.dumps(obj, ensure_ascii=False)
+        search: 'json dumps 中文 乱码 ensure_ascii'
+
+      - symptom: |
+          KeyError: 'xxx'，但字段明明"应该"有
+        scene: |
+          city = data["user"]["profile"]["city"]
+        why: |
+          接口返回的字段可能缺失，或层级比预期少一层，直接链式取值必崩。
+        fix: |
+          city = data.get("user", {}).get("profile", {}).get("city", "")
+        search: 'python 字典 多层嵌套取值 KeyError get'
 
   - id: eng_http
     title: HTTP 与调用公开 API
     stage: 阶段一 · Python 与工程基础
     requires: [py_json, eng_venv, py_error]
+    summary: 让程序去别的服务器取数据。三个必做动作：设超时、判状态码、密钥走环境变量。
     skills:
-      - HTTP 请求与响应、状态码含义
-      - GET / POST 的区别
-      - 用 httpx 或 requests 发请求
-      - 超时、重试与错误处理
-      - 用环境变量存放密钥
+      - id: basics
+        title: 请求与响应
+        what: 客户端发一个请求（方法 + 地址 + 头 + 体），服务器返回状态码 + 头 + 体。
+        example: |
+          GET https://api.example.com/weather?city=hangzhou HTTP/1.1
+          Host: api.example.com
+          User-Agent: python-requests/2.31
+        note: 日常打交道最多的是 GET（取数据）和 POST（提交数据）。
+
+      - id: status
+        title: 状态码
+        what: 2xx 成功、3xx 重定向、4xx 客户端错（401 未认证、404 不存在、429 太频繁）、5xx 服务端错。
+        example: |
+          200 OK           请求成功
+          401 Unauthorized 密钥无效或没带
+          404 Not Found    地址或资源不存在
+          429 Too Many Requests  触发限流
+          500 Internal Server Error  对方服务出错
+        note: 4xx 是自己写错了，5xx 是对面的问题——排查方向完全不同。
+
+      - id: get
+        title: 发一个 GET 请求
+        what: requests.get(url, params=...)，params 会自动拼成查询字符串。
+        example: |
+          import requests
+
+          r = requests.get(
+              "https://api.github.com/repos/psf/requests",
+              params={"page": 1},
+              timeout=10,
+          )
+          print(r.status_code)
+          data = r.json()
+          print(data["stargazers_count"])
+        output: |
+          200
+          52000
+        note: 需要先 pip install requests；也可以用标准库 urllib，但代码会啰嗦很多。
+
+      - id: post
+        title: 发 POST 请求
+        what: json= 参数会自动序列化并设置 Content-Type；data= 则是表单编码。
+        example: |
+          r = requests.post(
+              "https://httpbin.org/post",
+              json={"name": "小明", "age": 18},
+              timeout=10,
+          )
+          print(r.json()["json"])
+        output: |
+          {'name': '小明', 'age': 18}
+        note: 传 JSON 用 json=，传表单用 data=。两者混用会得到奇怪的解析结果。
+
+      - id: timeout
+        title: 超时与异常
+        what: 必须设 timeout，否则网络不通时程序会永久挂起。网络错误抛 requests.RequestException。
+        example: |
+          import requests
+
+          try:
+              r = requests.get("https://example.com", timeout=5)
+              r.raise_for_status()          # 4xx/5xx 直接抛异常
+              print(r.text[:20])
+          except requests.Timeout:
+              print("超时")
+          except requests.RequestException as e:
+              print("请求失败", e)
+        note: timeout 是「连接 + 读取」的总时长上限，不是重试次数。
+
+      - id: secret
+        title: 密钥走环境变量
+        what: API Key 放环境变量或用 .env 文件加载，绝不写进代码。
+        example: |
+          import os
+          key = os.getenv("API_KEY")
+          if not key:
+              raise SystemExit("请先设置环境变量 API_KEY")
+
+          headers = {"Authorization": f"Bearer {key}"}
+        note: 代码会进仓库、会被分享、会被截图；环境变量不会。
     acceptance:
       - 能调用一个公开 API 并把结果解析出来
       - 能处理超时、非 200 响应、字段缺失三种情况
       - API Key 不写进代码，而是从环境变量读
+      - 能看懂 4xx 和 5xx 的排查方向差异
     project:
       name: 命令行天气查询
       note: 调用公开天气 API，输入城市名输出当天天气，处理城市不存在的情况
     pitfalls:
-      - 不设 timeout，网络不通时程序会一直挂着
-      - 拿到的状态码不是 200 就直接取数据，结果解析出奇怪的东西
-      - 密钥硬编码在代码里然后推到了公开仓库 —— 要立刻吊销并改用环境变量
-      - 国内访问部分境外 API 不稳定，要么配代理要么换国内数据源
+      - symptom: |
+          程序一动不动，既不报错也不退出，Ctrl+C 才有反应
+        scene: |
+          requests.get("https://some-slow-api.com/data")    # 没写 timeout
+        why: |
+          requests 默认不超时，网络半通不通时会一直等，可能等几分钟到几十分钟。
+        fix: |
+          requests.get(url, timeout=10)
+        search: 'requests 不设 timeout 卡住 挂起'
+
+      - symptom: |
+          requests.exceptions.JSONDecodeError 或 KeyError: 'data'
+        scene: |
+          data = r.json()["data"]      # 没判断状态码
+        why: |
+          请求失败时服务器常返回一个 HTML 错误页，r.json() 直接解析失败；
+          或者返回的 JSON 结构里根本没有预期字段。
+        fix: |
+          r.raise_for_status()         # 先让 4xx/5xx 抛异常
+          if r.headers.get("content-type", "").startswith("application/json"):
+              data = r.json().get("data", {})
+        search: 'requests json 解析失败 状态码 判断'
+
+      - symptom: |
+          API Key 出现在公开仓库的提交历史里
+        scene: |
+          headers = {"Authorization": "Bearer sk-abc123..."}
+        why: |
+          代码提交后即使删掉文件，历史里仍然留着，任何人 clone 都能翻到。
+        fix: |
+          立刻去平台吊销该密钥并重新生成；
+          改为读环境变量，.env 写进 .gitignore。
+        search: 'API key 泄露 公开仓库 吊销'
+
+      - symptom: |
+          国内访问部分境外 API 频繁超时，或返回 403
+        scene: |
+          requests.get("https://api.openai.com/...", timeout=10)
+        why: |
+          跨境网络不稳定是常态，和代码无关。
+        fix: |
+          开发期配代理；或换国内可用的数据源；生产环境慎用不稳定链路。
+        search: 'requests 请求超时 代理 境外 API'
 
   - id: eng_publish
     title: 把项目发布到 GitHub / Gitee
     stage: 阶段一 · Python 与工程基础
     requires: [eng_git, eng_struct]
+    summary: 代码放在自己电脑上只是文件，放出去才是作品。这一步也是开源项目的起点。
     skills:
-      - 创建远程仓库并关联本地
-      - 推送与拉取
-      - 写一份别人能跑通的 README
-      - 选择开源许可证
-      - 打标签与发布 Release
+      - id: create
+        title: 创建远程仓库
+        what: 在平台上新建仓库，**任何初始化选项都不要勾**，保持空仓库。
+        example: |
+          1. 打开 github.com/new 或 gitee.com/projects/new
+          2. 仓库名填英文
+          3. 选 Public（公开）
+          4. README / .gitignore / LICENSE 全部不勾
+        note: 勾了任何一个，远程就多出一个本地没有的提交，第一次推送必冲突。
+
+      - id: push
+        title: 关联与推送
+        what: 先 remote add 登记地址，再 push -u 推送并记住对应关系。
+        example: |
+          git remote add origin https://github.com/你/仓库.git
+          git push -u origin main
+        note: -u 之后，以后直接 git push 就行，不用再写远程和分支名。
+
+      - id: readme
+        title: 写一份别人能跑通的 README
+        what: 判断标准只有一条——陌生人照着它能把项目跑起来。
+        example: |
+          # 项目名
+          > 一句话说明它解决什么问题
+
+          ## 安装
+          pip install -r requirements.txt
+
+          ## 使用
+          python -m myapp --help
+
+          ## 许可证
+          MIT
+        note: 补上前置条件（Python 版本、要不要配环境变量），能省掉一半提问。
+
+      - id: license
+        title: 选择许可证
+        what: 没有 LICENSE 就等于「保留所有权利」，别人不能合法使用。MIT 最宽松。
+        example: |
+          MIT         可以商用、修改、再发布，需保留版权声明
+          Apache-2.0  同 MIT，另加专利授权条款
+          GPL-3.0     衍生作品必须也用 GPL（有传染性）
+        note: 自己的练习项目用 MIT 足够。
+
+      - id: release
+        title: 打标签与 Release
+        what: 标签标记某个提交是「某个版本」；Release 是在标签之上附一份发布说明。
+        example: |
+          git tag -a v1.0.0 -m "首个版本"
+          git push origin v1.0.0
+          # 然后到网页 Releases 页面基于该标签创建 Release
+        note: 版本号遵循语义化：修 bug 升 PATCH，加功能升 MINOR，不兼容改动升 MAJOR。
+
+      - id: mirror
+        title: 双平台镜像
+        what: 同时推 GitHub 和 Gitee，国内用户 clone 更快，也照顾只有 Gitee 账号的人。
+        example: |
+          git remote add gitee https://gitee.com/你/仓库.git
+          git push gitee main
+          git push gitee --tags
+        note: 两个远程独立，推完用 git ls-remote 核对两边 hash 是否一致。
     acceptance:
       - 自己的练习项目能在网上被访问到
       - 别人按 README 能装能跑
       - 仓库里有明确的 LICENSE 文件
+      - 至少打过一次标签并发布过 Release
     project:
       name: 发布第一个公开仓库
       note: 把整理好的练习项目发布到 GitHub，并同步一份到 Gitee
     pitfalls:
-      - 建远程仓库时勾选了初始化选项，本地推送冲突；要么强制推送要么先拉取合并
-      - 推送前务必检查有没有把密钥、token、账号密码提交上去 —— 提交历史里很难彻底清除
-      - 只推代码不写 README，别人点进来完全不知道这是干什么的
-      - 国内访问 GitHub 不稳定，git 要单独配代理，浏览器能上不等于 git 能上
+      - symptom: |
+          本地仓库推上去后，别人打开首页只看到一行字
+        scene: |
+          # 只推了代码，没有 README
+        why: |
+          平台首页默认渲染 README.md，没有就显示文件列表，第一印象很差。
+        fix: |
+          补一个 README：这是什么、怎么装、怎么用、许可证。
+        search: 'github 仓库 没有 readme 首页'
+
+      - symptom: |
+          git 连不上 GitHub，但浏览器能正常打开
+        scene: |
+          git clone https://github.com/...
+          fatal: unable to access ... Failed to connect to github.com port 443
+        why: |
+          浏览器走的是系统代理，git 是独立进程，不读浏览器设置，默认不走代理。
+        fix: |
+          git config --global http.proxy http://127.0.0.1:7897
+          git config --global https.proxy http://127.0.0.1:7897
+          （端口按自己代理软件的实际端口填）
+        search: 'git failed to connect github port 443 代理'
+
+      - symptom: |
+          推送时提示没有权限，或者一直要求输入密码
+        scene: |
+          remote: Support for password authentication was removed
+        why: |
+          GitHub 从 2021 年起不再接受账号密码，必须用 Personal Access Token 或 SSH。
+        fix: |
+          生成 token（勾选 repo 权限）当作密码使用；
+          或配置 SSH 密钥后把远程地址改成 git@github.com:...
+        search: 'github support for password authentication was removed'
+
+      - symptom: |
+          提交历史里出现了 .env、密钥、账号密码
+        scene: |
+          git add .   # 没检查就提交了
+        why: |
+          提交历史是只追加的，即使后面删文件，历史里依然能翻到。
+        fix: |
+          立即吊销对应密钥；用 git filter-repo 或 BFG 清理历史；
+          以后提交前先 git diff --cached 扫一遍。
+        search: 'git 提交历史 删除 敏感信息 filter-repo'
     resources:
       - title: 如何选择开源许可证
         url: https://choosealicense.com/
