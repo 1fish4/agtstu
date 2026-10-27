@@ -484,6 +484,34 @@ nodes:
           True
         note: 判断文件后缀、过滤日志行，startswith 和 endswith 比 in 更准确。
 
+      - id: str_methods
+        title: 字符串方法速查表
+        what: 按用途分六组，覆盖日常九成场景。
+        example: |
+          s = "  Hello World  "
+
+          # 大小写
+          s.upper()  s.lower()  s.title()  s.capitalize()  s.swapcase()
+
+          # 去空白（可传入要去掉的字符集合）
+          s.strip()  s.lstrip()  s.rstrip()  s.strip(" H")
+
+          # 查找与判断
+          s.find("o")  s.rfind("o")  s.index("o")  s.count("o")
+          s.startswith("H")  s.endswith("d")  "o" in s
+
+          # 替换与分割
+          s.replace("l", "L")  s.split()  s.rsplit(" ", 1)  s.splitlines()
+
+          # 内容判断
+          "123".isdigit()  "abc".isalpha()  "a1".isalnum()  "  ".isspace()
+
+          # 拼接与对齐
+          "-".join(["a", "b"])  "x".center(5, "-")  "x".ljust(5)  "x".rjust(5)
+        note: |
+          find 找不到返回 -1，index 找不到抛 ValueError——不确定时用 find 或 in。
+          split() 不带参数按「任意空白」切并自动忽略连续空白；split(" ") 会产生空字符串。
+
       - id: escape
         title: 转义字符与原始字符串
         what: \n 换行、\t 制表符；字符串前加 r 让反斜杠失效，写 Windows 路径和正则时必用。
@@ -572,34 +600,110 @@ nodes:
     requires: [py_basic]
     summary: 四种容器各有分工——要顺序用 list，要查表用 dict，要不重复用 set，要不可变用 tuple。
     skills:
-      - id: list
-        title: 列表的增删改查
-        what: append 尾部加、insert 指定位置插、remove 按值删、pop 按下标删。
+      - id: list_create
+        title: 列表创建与追加
+        what: append 加一个元素，extend 加一串，+ 生成新列表（原列表不变）。
         example: |
-          nums = [3, 1, 2]
-          nums.append(4)        # [3, 1, 2, 4]
-          nums.insert(0, 0)     # [0, 3, 1, 2, 4]
-          nums.remove(3)        # 按值删第一个 3
-          last = nums.pop()     # 弹出末尾
+          a = [1, 2]
+          a.append(3)           # [1, 2, 3]
+          a.extend([4, 5])      # [1, 2, 3, 4, 5]
+          a.extend("67")        # [..., '6', '7']  字符串会被逐字符拆开
+          print(a)
+          print([1, 2] + [3])   # 生成新列表
+        output: |
+          [1, 2, 3, 4, 5, '6', '7']
+          [1, 2, 3]
+        note: append 加的是「一个对象」，所以 a.append([4, 5]) 会得到一个嵌套列表。
+
+      - id: list_insert
+        title: 插入与删除
+        what: insert(i, x) 插；remove(x) 按值删；pop(i) 按下标删并返回；del 按下标删；clear() 清空。
+        example: |
+          nums = [3, 1, 2, 1]
+          nums.insert(0, 9)     # [9, 3, 1, 2, 1]
+          nums.remove(1)        # 删掉第一个 1 → [9, 3, 2, 1]
+          last = nums.pop()     # 弹出末尾 1，返回 1
+          del nums[0]           # 删下标 0
           print(nums, last)
         output: |
-          [0, 1, 2] 4
-        note: remove 只删第一个匹配值；要按下标删用 pop(i) 或 del nums[i]。
+          [3, 2] 1
+        note: remove 按值删、只删第一个，值不存在会抛 ValueError；pop 按下标删，可拿到被删的值。
 
-      - id: sort
-        title: 排序：sort 与 sorted
-        what: nums.sort() 原地排序返回 None；sorted(nums) 返回新列表不动原数据。
+      - id: list_query
+        title: 查找与统计
+        what: index(x) 找位置，count(x) 数出现次数，in 判断是否存在。
+        example: |
+          nums = [10, 20, 20, 30]
+          print(nums.index(20))     # 第一个 20 的下标
+          print(nums.count(20))
+          print(30 in nums)
+        output: |
+          1
+          2
+          True
+        note: index 找不到会抛 ValueError，不确定时先用 in 判断。
+
+      - id: list_sort
+        title: 排序与反转
+        what: sort() 原地排序返回 None；sorted() 返回新列表；reverse() 原地反转；reversed() 返回迭代器。
         example: |
           nums = [3, 1, 2]
-          print(sorted(nums))       # [1, 2, 3]
-          print(nums)               # [3, 1, 2]  原数据没变
-          nums.sort(reverse=True)   # 原地降序
-          print(nums)               # [3, 2, 1]
+          print(sorted(nums))            # 新列表
+          print(nums)                    # 原数据不变
+          nums.sort(reverse=True)        # 原地降序
+          print(nums)
+          nums.reverse()                 # 原地反转
+          print(nums)
         output: |
           [1, 2, 3]
           [3, 1, 2]
           [3, 2, 1]
+          [1, 2, 3]
         note: '按某个字段排用 key 参数：sorted(students, key=lambda s: s["score"])。'
+
+      - id: list_methods
+        title: 列表方法速查表
+        what: 常用的十一个方法，按用途分类记住就不会每次都去搜。
+        example: |
+          a = [1, 2, 3]
+
+          a.append(x)        # 末尾加一个
+          a.extend(iterable) # 末尾加一串
+          a.insert(i, x)     # 在 i 处插入
+          a.remove(x)        # 按值删第一个
+          a.pop(i=-1)        # 按下标删并返回
+          a.clear()          # 清空
+          a.index(x)         # 找位置
+          a.count(x)         # 数次数
+          a.sort()           # 原地排序（返回 None）
+          a.reverse()        # 原地反转（返回 None）
+          a.copy()           # 浅拷贝
+        note: |
+          改原列表的方法（append/extend/insert/remove/pop/clear/sort/reverse）都返回 None；
+          返回新对象的是 sorted()、reversed()、切片 a[:]。
+
+      - id: seq_common
+        title: 序列通用操作
+        what: 字符串、列表、元组都支持索引、切片、len、in、加法、乘法。内置函数 sum/max/min/sorted 也通用。
+        example: |
+          s = "abc"
+          a = [1, 2, 3]
+          t = (4, 5)
+
+          print(len(s), len(a), len(t))
+          print(a[0], s[-1], t[1])
+          print(a[1:], s[::-1])
+          print([0] * 3, "ab" * 2)
+          print(sum(a), max(a), min(a))
+          print(list(reversed(a)))
+        output: |
+          3 3 2
+          1 c 5
+          [2, 3] cba
+          [0, 0, 0] abab
+          6 3 1
+          [3, 2, 1]
+        note: sum 只能用于数字；字符串/元组相加是拼接而不是求和。
 
       - id: tuple
         title: 元组
@@ -953,50 +1057,95 @@ nodes:
           你好，小明
         note: 只写 def 不调用，函数体一行都不会执行。
 
-      - id: params
-        title: 参数：位置、关键字、默认值
-        what: 按位置传参要记顺序；关键字传参不看顺序；默认值让参数可选。
+      - id: positional
+        title: 位置参数与关键字参数
+        what: 按位置传参必须对上顺序；按「名字=值」传参不看顺序，可读性更好。
+        example: |
+          def register(name, age, city):
+              return f"{name}/{age}/{city}"
+
+          print(register("小明", 18, "杭州"))              # 全用位置
+          print(register(city="杭州", name="小明", age=18))  # 全用关键字
+        output: |
+          小明/18/杭州
+          小明/18/杭州
+        note: |
+          混用时位置参数必须全部写在关键字参数前面，否则报 SyntaxError。
+          参数多的函数，调用处一律用关键字，半年后还能看懂。
+
+      - id: default
+        title: 默认参数
+        what: 定义时给参数一个默认值，调用时可以省略；默认值参数必须排在必填参数之后。
         example: |
           def power(base, exp=2):
               return base ** exp
 
           print(power(3))            # 用默认 exp
-          print(power(3, exp=3))     # 关键字传参
+          print(power(3, 3))         # 覆盖默认值
+          print(power(3, exp=4))
         output: |
           9
           27
-        note: 默认值参数必须放在必填参数后面，否则报语法错误。
+          81
+        note: 默认值在**函数定义时求值一次**，所以不要用列表、字典这类可变对象做默认值。
 
       - id: args
-        title: "*args 与 **kwargs"
-        what: "*args 收集多余的位置参数成元组，**kwargs 收集多余的关键字参数成字典。"
+        title: "*args 收集位置参数"
+        what: "*args 把多出来的位置参数收成一个元组。名字随意，星号是关键。"
         example: |
-          def show(*args, **kwargs):
-              print(args)
-              print(kwargs)
+          def total(*nums):
+              return sum(nums)
 
-          show(1, 2, name="小明", age=18)
+          print(total(1, 2, 3))
+          print(total())
         output: |
-          (1, 2)
-          {'name': '小明', 'age': 18}
-        note: 常见于「包装别的函数」的场景，先接住所有参数再原样转发。
+          6
+          0
+        note: 调用时用 * 可以把列表拆开传：total(*[1, 2, 3])。
+
+      - id: kwargs
+        title: "**kwargs 收集关键字参数"
+        what: "**kwargs 把多出来的关键字参数收成一个字典。"
+        example: |
+          def build(name, **extra):
+              return {"name": name, **extra}
+
+          print(build("小明", age=18, city="杭州"))
+        output: |
+          {'name': '小明', 'age': 18, 'city': '杭州'}
+        note: 常见于包装别的函数、或者需要接收「任意配置项」的场景。
+
+      - id: kwonly
+        title: 仅关键字参数
+        what: 参数列表里写一个孤立的 *，它后面的参数只能用关键字传。
+        example: |
+          def connect(host, *, timeout=5, retries=3):
+              return f"{host} t={timeout} r={retries}"
+
+          print(connect("db.local", timeout=10))   # 只能写关键字
+          # connect("db.local", 10)                # 报 TypeError
+        output: |
+          db.local t=10 r=3
+        note: 用来防止调用方「按位置瞎传」，参数一多就能避免张冠李戴。
 
       - id: return
         title: 返回值与多值返回
-        what: 没 return 的函数返回 None；return 多个值实际返回一个元组。
+        what: 没写 return（或只写 return）返回 None；return 多个值时实际返回一个元组。
         example: |
           def min_max(nums):
               return min(nums), max(nums)
 
           lo, hi = min_max([3, 1, 4])
           print(lo, hi)
+          print(type(min_max([1])))
         output: |
           1 4
-        note: 解包时变量数量要和返回值数量一致，不一致会报 ValueError。
+          <class 'tuple'>
+        note: '解包时变量数量要和返回值一致，不一致会报 ValueError: too many values to unpack。'
 
       - id: scope
         title: 作用域
-        what: 函数内赋值创建的是局部变量；读外层变量可以，改全局变量要 global。
+        what: 函数内赋值创建局部变量；读外层变量可以，改全局变量要 global。
         example: |
           count = 0
 
@@ -1017,20 +1166,28 @@ nodes:
           students = [("小明", 90), ("小红", 85)]
           students.sort(key=lambda s: s[1], reverse=True)
           print(students)
+
+          nums = [1, 2, 3]
+          print(list(map(lambda x: x * 2, nums)))
         output: |
           [('小明', 90), ('小红', 85)]
+          [2, 4, 6]
         note: 只能写一个表达式。逻辑超过一行就老老实实 def。
 
       - id: annotate
-        title: 类型注解
-        what: 参数和返回值标注类型，编辑器提示和排错都靠它。不强制，但现代 Python 项目标配。
+        title: 类型注解与 docstring
+        what: 参数和返回值标注类型；函数第一行写字符串作为文档，help() 能读出来。
         example: |
           def add(a: int, b: int) -> int:
+              """返回两数之和。"""
               return a + b
 
-          def greet(name: str) -> str:
-              return f"你好，{name}"
-        note: 注解不会限制运行时的类型，传错不报错——它是写给人和工具看的。
+          print(add(1, 2))
+          print(add.__doc__)
+        output: |
+          3
+          返回两数之和。
+        note: 注解不会限制运行时类型，传错不报错——它是写给人和编辑器看的。
     acceptance:
       - 能把一段重复代码抽成函数
       - 能一眼看出一个函数该不该拆（超过一屏就该拆）
