@@ -424,6 +424,21 @@
   }
   .sheet-head h2 { margin: 0 0 7px; font-size: 22px; letter-spacing: -.01em; }
   .sheet-meta { font-size: 12.5px; color: var(--ink3); font-family: var(--mono); }
+  .node-links {
+    margin-top: 11px;
+    display: flex; flex-wrap: wrap; gap: 7px; align-items: center;
+  }
+  .lk-label {
+    font-size: 11.5px; color: var(--ink3); letter-spacing: .04em;
+  }
+  .lk {
+    font-family: var(--sans); font-size: 12.5px;
+    border: 1px solid var(--line); background: var(--card);
+    border-radius: 7px; padding: 3px 10px; cursor: pointer;
+    color: var(--ink2); transition: border-color .15s, color .15s;
+  }
+  .lk:hover { border-color: var(--accent); color: var(--accent); }
+  .lk-sep { width: 1px; height: 14px; background: var(--line); margin: 0 3px; }
   .sheet-close {
     margin-left: auto; flex: none;
     width: 34px; height: 34px; border-radius: 9px;
@@ -746,6 +761,7 @@
       <div>
         <h2 id="ov-title"></h2>
         <div class="sheet-meta" id="ov-meta"></div>
+        <div class="node-links" id="ov-links"></div>
       </div>
       <button class="sheet-close" id="ov-close" aria-label="关闭">×</button>
     </div>
@@ -1340,8 +1356,29 @@
     var meta = [];
     if (n.stage) { meta.push(n.stage); }
     meta.push(n.id);
-    if (n.requires.length) { meta.push("前置 " + n.requires.join("、")); }
+    meta.push(n.skills.length + " 个知识点");
     document.getElementById("ov-meta").textContent = meta.join("  ·  ");
+
+    // 前置 / 后置节点跳转
+    var links = [];
+    if (n.requires.length) {
+      links.push('<span class="lk-label">前置</span>');
+      n.requires.forEach(function (id) {
+        if (!BY_ID[id]) { return; }
+        links.push('<button class="lk" data-goto="' + id + '">← ' +
+                   esc(BY_ID[id].title) + "</button>");
+      });
+    }
+    if (n.unlocks.length) {
+      if (links.length) { links.push('<span class="lk-sep"></span>'); }
+      links.push('<span class="lk-label">解锁</span>');
+      n.unlocks.forEach(function (id) {
+        if (!BY_ID[id]) { return; }
+        links.push('<button class="lk" data-goto="' + id + '">' +
+                   esc(BY_ID[id].title) + " →</button>");
+      });
+    }
+    document.getElementById("ov-links").innerHTML = links.join("");
 
     var h = [];
 
@@ -1458,6 +1495,20 @@
 
   overlay.addEventListener("click", function (e) {
     if (e.target === overlay) { closeSheet(); return; }
+
+    var g = e.target.closest("[data-goto]");
+    if (g) {
+      var gid = g.getAttribute("data-goto");
+      cur = {
+        id: gid,
+        open: BY_ID[gid].skills.length ? 0 : -1,
+        pit: -1,
+        rect: cur.rect,
+      };
+      renderSheet();
+      document.getElementById("ov-main").scrollTop = 0;
+      return;
+    }
 
     var s = e.target.closest("[data-step]");
     if (s) {
