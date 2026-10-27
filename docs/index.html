@@ -425,20 +425,33 @@
   .sheet-head h2 { margin: 0 0 7px; font-size: 22px; letter-spacing: -.01em; }
   .sheet-meta { font-size: 12.5px; color: var(--ink3); font-family: var(--mono); }
   .node-links {
-    margin-top: 11px;
-    display: flex; flex-wrap: wrap; gap: 7px; align-items: center;
+    margin-top: 13px;
+    display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+    padding: 9px 12px;
+    background: var(--line2);
+    border: 1px solid var(--line);
+    border-radius: 10px;
   }
   .lk-label {
-    font-size: 11.5px; color: var(--ink3); letter-spacing: .04em;
+    font-size: 11.5px; font-weight: 700; letter-spacing: .05em;
+    color: var(--ink2);
   }
   .lk {
-    font-family: var(--sans); font-size: 12.5px;
-    border: 1px solid var(--line); background: var(--card);
-    border-radius: 7px; padding: 3px 10px; cursor: pointer;
-    color: var(--ink2); transition: border-color .15s, color .15s;
+    font-family: var(--sans); font-size: 13px; font-weight: 600;
+    border: 1px solid var(--accent2);
+    background: var(--card);
+    border-radius: 8px; padding: 5px 13px; cursor: pointer;
+    color: var(--accent);
+    box-shadow: 0 1px 2px rgba(27, 36, 48, .06);
+    transition: background .15s, border-color .15s, transform .1s;
   }
-  .lk:hover { border-color: var(--accent); color: var(--accent); }
-  .lk-sep { width: 1px; height: 14px; background: var(--line); margin: 0 3px; }
+  .lk:hover { background: var(--soft); border-color: var(--accent); }
+  .lk:active { transform: translateY(1px); }
+  .lk-pre {
+    border-color: var(--line); color: var(--ink2); background: var(--card);
+  }
+  .lk-pre:hover { border-color: var(--ink3); color: var(--ink); background: var(--card); }
+  .lk-sep { width: 1px; height: 18px; background: var(--line); margin: 0 4px; }
   .sheet-close {
     margin-left: auto; flex: none;
     width: 34px; height: 34px; border-radius: 9px;
@@ -936,18 +949,65 @@
         }
       });
     });
-    var sideOf = {};
-    var counter = { L: 0, R: 0 };
-    var chanOf = {};
+    /* 跨层边的垂直通道，只需避开「它实际经过的那几层」的节点，
+       所以可以就近取通道，不必一律绕到画布最外侧——
+       统一绕到最外侧会在图上勾出一个大矩形，看起来像相框。 */
+    var chanX = {};
+    var usedX = [];
+    var CH_M = 16;
     cross.forEach(function (key) {
       var parts = key.split(">");
-      var mid = (pos[parts[0]].cx + pos[parts[1]].cx) / 2;
-      sideOf[key] = mid < size.width / 2 ? "L" : "R";
+      var pa = pos[parts[0]], pb = pos[parts[1]];
+      var lvA = BY_ID[parts[0]].level, lvB = BY_ID[parts[1]].level;
+
+      var blocked = [];
+      for (var lv = lvA + 1; lv < lvB; lv++) {
+        NODES.forEach(function (n) {
+          if (n.level !== lv) { return; }
+          var q = pos[n.id];
+          blocked.push([q.x - CH_M, q.x + NODE_W + CH_M]);
+        });
+      }
+
+      function free(x) {
+        if (x < 8 || x > size.width - 8) { return false; }
+        for (var i = 0; i < blocked.length; i++) {
+          if (x > blocked[i][0] && x < blocked[i][1]) { return false; }
+        }
+        for (var j = 0; j < usedX.length; j++) {
+          if (Math.abs(x - usedX[j]) < 8) { return false; }
+        }
+        return true;
+      }
+
+      var mid = (pa.cx + pb.cx) / 2;
+      var chosen = null;
+      for (var d = 0; d <= 460 && chosen === null; d += 6) {
+        if (free(mid - d)) { chosen = mid - d; break; }
+        if (free(mid + d)) { chosen = mid + d; break; }
+      }
+      if (chosen === null) { chosen = mid < size.width / 2 ? 10 : size.width - 10; }
+      chanX[key] = chosen;
+      usedX.push(chosen);
     });
-    cross.forEach(function (key) {
-      var s = sideOf[key];
-      chanOf[key] = counter[s]++;
-    });
+
+    // 折线圆角：在每个拐点处切掉一小段，用二次曲线过渡
+    function roundedPath(pts, r) {
+      var d = "M" + pts[0][0] + "," + pts[0][1];
+      for (var i = 1; i < pts.length - 1; i++) {
+        var p0 = pts[i - 1], p1 = pts[i], p2 = pts[i + 1];
+        var v1x = p0[0] - p1[0], v1y = p0[1] - p1[1];
+        var v2x = p2[0] - p1[0], v2y = p2[1] - p1[1];
+        var l1 = Math.sqrt(v1x * v1x + v1y * v1y) || 1;
+        var l2 = Math.sqrt(v2x * v2x + v2y * v2y) || 1;
+        var rr = Math.min(r, l1 / 2, l2 / 2);
+        var ax = p1[0] + v1x / l1 * rr, ay = p1[1] + v1y / l1 * rr;
+        var bx = p1[0] + v2x / l2 * rr, by = p1[1] + v2y / l2 * rr;
+        d += " L" + ax + "," + ay + " Q" + p1[0] + "," + p1[1] + " " + bx + "," + by;
+      }
+      var last = pts[pts.length - 1];
+      return d + " L" + last[0] + "," + last[1];
+    }
 
     function pathFor(pid, cid) {
       var a = pos[pid], b = pos[cid];
@@ -962,16 +1022,11 @@
       }
 
       var key = pid + ">" + cid;
-      var k = chanOf[key] || 0;
-      var chx = sideOf[key] === "L" ? (11 + k * 9) : (size.width - 11 - k * 9);
-      var s1 = y1 + 13;
-      var e1 = y2 - 13;
-      return "M" + a.cx + "," + y1 +
-             " L" + a.cx + "," + s1 +
-             " L" + chx + "," + s1 +
-             " L" + chx + "," + e1 +
-             " L" + b.cx + "," + e1 +
-             " L" + b.cx + "," + y2;
+      var chx = chanX[key] || (size.width / 2);
+      return roundedPath([
+        [a.cx, y1], [a.cx, y1 + 13], [chx, y1 + 13],
+        [chx, y2 - 13], [b.cx, y2 - 13], [b.cx, y2],
+      ], 9);
     }
 
     // 边：先画，压在节点下面
@@ -1365,7 +1420,7 @@
       links.push('<span class="lk-label">前置</span>');
       n.requires.forEach(function (id) {
         if (!BY_ID[id]) { return; }
-        links.push('<button class="lk" data-goto="' + id + '">← ' +
+        links.push('<button class="lk lk-pre" data-goto="' + id + '">← ' +
                    esc(BY_ID[id].title) + "</button>");
       });
     }
