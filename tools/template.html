@@ -266,6 +266,10 @@
   .pill.p-open { color: var(--accent); border-color: var(--accent2); background: var(--soft); }
   .pill.p-done { color: var(--done); border-color: var(--done); background: var(--doneSoft); }
   .pill.p-lock { color: var(--ink3); }
+  .pill.p-tier {
+    color: var(--accent); background: var(--soft); border-color: var(--accent2);
+    font-weight: 600;
+  }
 
   .field { margin-bottom: 16px; }
   .field > .k {
@@ -424,6 +428,54 @@
   }
   .sheet-head h2 { margin: 0 0 7px; font-size: 22px; letter-spacing: -.01em; }
   .sheet-meta { font-size: 12.5px; color: var(--ink3); font-family: var(--mono); }
+
+  /* ---------- 掌握程度 ---------- */
+  .mastery {
+    border: 1px solid var(--line);
+    border-left-width: 3px;
+    border-left-color: var(--accent);
+    border-radius: 12px;
+    background: var(--card);
+    padding: 16px 20px 12px;
+    margin-bottom: 22px;
+  }
+  .mastery[data-tier="了解"] { border-left-color: var(--lock); }
+  .mastery[data-tier="熟练"] { border-left-color: var(--accent); border-left-width: 5px; }
+
+  .m-head { display: flex; align-items: center; gap: 11px; flex-wrap: wrap; margin-bottom: 10px; }
+  .m-badge {
+    font-size: 13.5px; font-weight: 700; letter-spacing: .06em;
+    padding: 3px 13px; border-radius: 7px;
+    border: 1px solid var(--line); background: var(--card); color: var(--ink2);
+  }
+  .mastery[data-tier="了解"] .m-badge {
+    border-color: var(--lock); color: var(--ink2); background: var(--line2);
+  }
+  .mastery[data-tier="会用"] .m-badge {
+    border-color: var(--accent2); color: var(--accent); background: var(--soft);
+  }
+  .mastery[data-tier="熟练"] .m-badge {
+    border-color: var(--accent); color: var(--card); background: var(--accent);
+  }
+  .m-tier-note { font-size: 12.5px; color: var(--ink3); line-height: 1.5; }
+
+  .m-row {
+    display: grid;
+    grid-template-columns: 78px minmax(0, 1fr);
+    gap: 12px;
+    padding: 9px 0;
+    border-top: 1px solid var(--line2);
+  }
+  .m-k {
+    font-size: 12px; font-weight: 700; letter-spacing: .03em;
+    color: var(--ink3); padding-top: 2px;
+  }
+  .m-v { font-size: 13.5px; line-height: 1.7; color: var(--ink2); }
+  .m-row.m-must .m-k { color: var(--accent); }
+  .m-row.m-beyond { background: var(--line2); margin: 0 -20px -12px; padding: 11px 20px; border-radius: 0 0 10px 10px; }
+  .m-row.m-beyond .m-k { color: var(--warn); }
+  .m-row.m-beyond .m-v { color: var(--ink3); }
+
   .node-links {
     margin-top: 13px;
     display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
@@ -1100,6 +1152,10 @@
 
     h.push('<div class="d-state">');
     h.push('<span class="pill p-' + st + '">' + stText + "</span>");
+    if (n.mastery && n.mastery.tier) {
+      h.push('<span class="pill p-tier" title="掌握程度">学到：' +
+             esc(n.mastery.tier) + "</span>");
+    }
     if (st === "locked") {
       h.push('<span style="color:var(--ink3);font-size:12.5px">还缺 ' + miss.length + " 个前置</span>");
     }
@@ -1436,6 +1492,30 @@
     document.getElementById("ov-links").innerHTML = links.join("");
 
     var h = [];
+
+    // 掌握程度：进来第一眼要看到「学到哪算够」
+    if (n.mastery) {
+      var TIER_NOTE = {
+        "了解": "知道它是什么、看得懂别人的代码就够，不要求自己写",
+        "会用": "能独立写出来解决问题，不要求懂底层实现",
+        "熟练": "不仅会用，遇到边界情况和报错能自己定位修复"
+      };
+      h.push('<div class="mastery" data-tier="' + esc(n.mastery.tier) + '">');
+      h.push('<div class="m-head">');
+      h.push('<span class="m-badge">' + esc(n.mastery.tier || "未标注") + "</span>");
+      h.push('<span class="m-tier-note">' + esc(TIER_NOTE[n.mastery.tier] || "") + "</span>");
+      h.push("</div>");
+      [["m-must", "必须达到", n.mastery.must],
+       ["m-enough", "到这里就够", n.mastery.enough],
+       ["m-beyond", "现在不用管", n.mastery.beyond]].forEach(function (row) {
+        if (!row[2]) { return; }
+        h.push('<div class="m-row ' + row[0] + '">');
+        h.push('<div class="m-k">' + row[1] + "</div>");
+        h.push('<div class="m-v">' + esc(row[2]) + "</div>");
+        h.push("</div>");
+      });
+      h.push("</div>");
+    }
 
     if (!n.skills.length) {
       h.push('<div class="empty-topic">这个节点还没有拆分知识点。</div>');

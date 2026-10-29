@@ -32,7 +32,7 @@ from agtstu.loader import load_nodes  # noqa: E402
 from agtstu.model import Node  # noqa: E402
 
 #: 测试数量与子命令数量。改动代码后请同步这两个数字。
-TEST_COUNT = 40
+TEST_COUNT = 51
 COMMAND_COUNT = 8
 
 TEMPLATE = Path(__file__).resolve().parent / "template.html"
@@ -88,6 +88,16 @@ def build_payload(nodes: list[Node]) -> dict:
                 for t in node.skills
             ],
             "acceptance": list(node.acceptance),
+            "mastery": (
+                {
+                    "tier": node.mastery.tier,
+                    "must": node.mastery.must,
+                    "enough": node.mastery.enough,
+                    "beyond": node.mastery.beyond,
+                }
+                if node.mastery and node.mastery.filled
+                else None
+            ),
             "pitfalls": [
                 {
                     "text": p.text,
