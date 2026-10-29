@@ -163,6 +163,16 @@ def cmd_show(args) -> int:
     if node.requires:
         print("\n前置：" + "、".join(node.requires))
 
+    if node.mastery and node.mastery.filled:
+        m = node.mastery
+        print(f"\n掌握程度：{m.tier or '未标注'}")
+        if m.must:
+            print(f"  必须达到：{m.must}")
+        if m.enough:
+            print(f"  到这里就够：{m.enough}")
+        if m.beyond:
+            print(f"  现在不用管：{m.beyond}")
+
     section("要掌握的知识点", node.topic_titles)
     section("验收标准", node.acceptance)
 
