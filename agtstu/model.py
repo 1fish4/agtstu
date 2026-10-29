@@ -17,7 +17,8 @@
 两层内容结构
 ------------
 一个节点下面是**知识点**（:class:`Topic`），每个知识点可以带「怎么用」的
-示例代码；节点级则挂**真实的坑**（:class:`Pitfall`）。
+示例代码；节点级则挂**真实的坑**（:class:`Pitfall`），以及**掌握程度**
+（:class:`Mastery`）——回答「学到哪算够、什么暂时不必学」。
 
 ``skills`` 与 ``pitfalls`` 都支持**简单写法**（纯字符串）和**详细写法**
 （字典），加载时统一解析成对象。这样既兼容早期数据，也允许逐条补细节。
@@ -28,10 +29,15 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
-__all__ = ["Node", "Project", "Resource", "Topic", "Pitfall", "from_dict"]
+__all__ = [
+    "Node", "Project", "Resource", "Topic", "Pitfall", "Mastery", "from_dict",
+]
 
 #: 必填字段。缺任何一个都会在加载阶段报错。
 REQUIRED_FIELDS = ("id", "title", "requires")
+
+#: 掌握程度的三个档位。语义见 :class:`Mastery`。
+MASTERY_TIERS = ("了解", "会用", "熟练")
 
 
 @dataclass
@@ -124,6 +130,48 @@ class Pitfall:
 
 
 @dataclass
+class Mastery:
+    """掌握程度：这个节点要学到什么水平，以及**不必**学到什么水平。
+
+    为什么单列一个字段
+    ------------------
+    ``acceptance`` 是一份「逐条打勾的检查清单」，回答"做到没有"；
+    ``mastery`` 回答的是另一个问题："到这个程度就可以走了"。
+
+    自学者最常见的时间浪费不是学得少，而是**在基础章节里死磕深度**——
+    抱着「变量与基本类型」去啃 CPython 的对象模型，结果迟迟写不出一个能跑的
+    小工具。所以这个字段里最有价值的一项反而是 ``beyond``：
+    明确划出「现阶段不用碰」的区域，给学习者一个停下来的许可。
+
+    ``tier`` 三档的判定标准
+    -----------------------
+    了解
+        知道它存在、能看懂别人的代码，不要求自己写出来。
+    会用
+        能独立写出来解决问题，不要求懂底层实现。
+    熟练
+        不仅会用，遇到边界情况与报错时能自己定位并修复。
+    """
+
+    tier: str = ""
+    """档位，取值见 :data:`MASTERY_TIERS`。"""
+
+    must: str = ""
+    """必须达到的能力线：学完必须能独立做出什么。"""
+
+    enough: str = ""
+    """够用的判断信号：出现什么现象就说明可以往下走了。"""
+
+    beyond: str = ""
+    """现在不用管什么：明确划出的「暂时不必深入」区域。"""
+
+    @property
+    def filled(self) -> bool:
+        """是否填写了内容。"""
+        return bool(self.tier or self.must or self.enough or self.beyond)
+
+
+@dataclass
 class Node:
     """学习路径中的一个节点。"""
 
@@ -147,6 +195,9 @@ class Node:
 
     acceptance: list[str] = field(default_factory=list)
     """验收标准。逐条自评，全部通过即视为合格——不设标准答案。"""
+
+    mastery: Mastery | None = None
+    """掌握程度要求。回答「学到哪算够、什么不必学」。"""
 
     project: Project | None = None
     """配套的参考项目。"""
@@ -239,6 +290,36 @@ def _parse_pitfalls(raw: Any, node_id: str) -> list[Pitfall]:
     return result
 
 
+def _parse_mastery(raw: Any, node_id: str) -> Mastery | None:
+    """掌握程度。目前只支持详细写法（字典），也允许简写成档位字符串。"""
+    if raw is None or raw == "":
+        return None
+    if isinstance(raw, str):
+        # 简写：mastery: 会用
+        if raw not in MASTERY_TIERS:
+            raise ValueError(
+                f"节点 {node_id!r} 的 mastery {raw!r} 不在 {list(MASTERY_TIERS)} 中。"
+            )
+        return Mastery(tier=raw)
+    if not isinstance(raw, dict):
+        raise ValueError(
+            f"节点 {node_id!r} 的 mastery 应为字典或档位字符串。"
+        )
+
+    tier = str(raw.get("tier", "") or "")
+    if tier and tier not in MASTERY_TIERS:
+        raise ValueError(
+            f"节点 {node_id!r} 的 mastery.tier {tier!r} 不在 "
+            f"{list(MASTERY_TIERS)} 中。"
+        )
+    return Mastery(
+        tier=tier,
+        must=str(raw.get("must", "") or ""),
+        enough=str(raw.get("enough", "") or ""),
+        beyond=str(raw.get("beyond", "") or ""),
+    )
+
+
 def from_dict(raw: dict[str, Any], *, source: str = "") -> Node:
     """把 YAML 解析出的字典转成 :class:`Node`。
 
@@ -301,6 +382,7 @@ def from_dict(raw: dict[str, Any], *, source: str = "") -> Node:
         summary=str(raw.get("summary", "")),
         skills=_parse_topics(raw.get("skills"), node_id),
         acceptance=[str(x) for x in (raw.get("acceptance") or [])],
+        mastery=_parse_mastery(raw.get("mastery"), node_id),
         project=project,
         pitfalls=_parse_pitfalls(raw.get("pitfalls"), node_id),
         resources=resources,
