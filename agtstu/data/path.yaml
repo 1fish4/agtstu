@@ -81,6 +81,11 @@ nodes:
           ├── Scripts\python.exe      ← 这一份解释器
           └── Lib\site-packages\      ← 这个项目独占的库
         note: 配解释器时选 .venv\Scripts\python.exe，就是用「这个项目的厨房」。
+    mastery:
+      tier: 了解
+      must: 装好 Python、在终端跑通自己的 .py 文件、在编辑器里指到正确的解释器
+      enough: 终端敲 python --version 有版本号，脚本能被 run 起来，就算过。环境问题自己啃超过半天就找人问，不值得在这上面耗
+      beyond: PATH 的查找顺序、多版本共存怎么管理、从源码编译安装——这些是运维的活，现在只要「能跑」
     acceptance:
       - 终端里输入 python --version 能看到版本号
       - 能用 python 文件名.py 跑通一个脚本
@@ -194,6 +199,11 @@ nodes:
           git diff                 # 工作区 vs 暂存区
           git diff --cached        # 暂存区 vs 上次提交
         note: 提交前 git diff 扫一眼，是性价比最高的自查动作。
+    mastery:
+      tier: 会用
+      must: 能走完 init → add → commit → push 一轮，能读懂 git status 的每一行，能写出把虚拟环境排除掉的 .gitignore
+      enough: 改完代码能自己提交并推上去，刷新仓库页面能看到新提交、显示的时间和你操作的对得上，就够了
+      beyond: rebase、cherry-pick、复杂的冲突合并、git 对象模型（blob/tree/commit 的关系）——单人开发用不到，等真多人协作了再学
     acceptance:
       - 能把一个本地目录变成 Git 仓库并完成首次提交
       - 能说清「提交之后代码存在哪」
@@ -330,6 +340,11 @@ nodes:
           print(f"{score:.1f}")              # 92.5
           print(f"{score:.0f}")              # 92
         note: f-string 会自动把数字转成字符串，所以它同时解决了「类型不匹配」和「拼接难读」两个问题。
+    mastery:
+      tier: 熟练
+      must: 不看笔记写出「接收输入 → 转换类型 → 计算 → 格式化输出」的完整脚本
+      enough: 看到 TypeError / ValueError 能立刻判断是哪个值的类型不对、该转成什么，而不是去搜报错
+      beyond: IEEE 754 浮点表示、整数的大小限制与内存布局、字符串的编码实现——知道「0.1 + 0.2 有精度问题」这条就够了，不必知道为什么
     acceptance:
       - 能写一个接收输入、做转换、输出结果的小脚本
       - 能解释 input() 返回的是什么类型
@@ -537,6 +552,11 @@ nodes:
           hello
           HELLO
         note: 忘记接收返回值是高频错误。列表的 sort() 会原地改，字符串的方法永远不会。
+    mastery:
+      tier: 熟练
+      must: 能对一段脏文本做清洗、切分、提取；方法名不必背，但要查得到
+      enough: 拿到一段文本，能拆出需要的字段；遇到乱码第一反应是查编码，而不是怀疑文件损坏
+      beyond: 正则表达式的高级语法、Unicode 码点与范式化、字符串拼接的性能优化——记住「大量拼接用 join」一条就够
     acceptance:
       - 能从一段文本里提取需要的信息
       - 能说清切片 [a:b] 的取值边界（含头不含尾）
@@ -784,6 +804,11 @@ nodes:
           ['a', 'b', 'c']
           {'a': 1, 'b': 2}
           [1, 2]
+    mastery:
+      tier: 熟练
+      must: 能按场景选对容器（顺序用 list、查表用 dict、去重用 set）；能熟练写列表推导式；清楚 b = a 是引用不是拷贝
+      enough: 写业务逻辑时不再纠结「该用哪个容器」，并且知道为什么遍历列表时删元素会漏
+      beyond: 哈希表的实现、复杂度分析、collections 里的全部容器——只需记住「list 查找 O(n)、dict/set 查找接近 O(1)」
     acceptance:
       - 能按场景选对容器：要顺序用 list，要查表用 dict，要去重用 set
       - 能遍历字典并同时拿到键和值
@@ -958,6 +983,11 @@ nodes:
           def todo():
               pass          # 先占位，以后再写
         note: Python 不允许空的代码块，没有 pass 会报 IndentationError。
+    mastery:
+      tier: 熟练
+      must: 写出两层以内嵌套的判断与循环；能用 enumerate / zip 替代手动维护下标
+      enough: 看到一个需求能直接写出循环结构，不需要先画流程图；能预判自己写的循环会不会死循环
+      beyond: 迭代器协议、生成器的惰性求值、推导式的底层实现——等讲到函数和性能时再回来
     acceptance:
       - 能写出嵌套两层以内的判断逻辑
       - 能说清 for...else 的 else 什么时候执行
@@ -1188,6 +1218,11 @@ nodes:
           3
           返回两数之和。
         note: 注解不会限制运行时类型，传错不报错——它是写给人和编辑器看的。
+    mastery:
+      tier: 熟练
+      must: 能把重复代码抽成函数；参数用对（位置 / 关键字 / 默认值 / 可变参数）；返回值清晰，不多也不少
+      enough: 写超过 30 行的脚本时，会自然而然想「这段是不是该抽成函数」；看到 def f(x=[]) 能立刻警觉
+      beyond: 装饰器、闭包、递归、函数式编程（map/filter 与推导式怎么选）——这是分水岭，等你能熟练写函数之后再回来，现在碰只会受挫
     acceptance:
       - 能把一段重复代码抽成函数
       - 能一眼看出一个函数该不该拆（超过一屏就该拆）
@@ -1321,6 +1356,11 @@ nodes:
           （Python 安装目录）
           （site-packages）
         note: 装在虚拟环境里的包在 site-packages 下；「装好了却找不到」多半是找错了这个路径。
+    mastery:
+      tier: 会用
+      must: "把自己的代码拆成多个文件互相引用；能解释 if __name__ == \"__main__\" 的作用"
+      enough: 项目超过两个文件时知道怎么组织、import 不会报 ModuleNotFoundError
+      beyond: 打包发布到 PyPI、命名空间包、sys.path 的查找顺序——记住「模块名别和标准库重名」这一条就够
     acceptance:
       - 能把自己的代码拆成多个文件互相引用
       - 能解释为什么脚本里要写 if __name__ == "__main__"
@@ -1433,6 +1473,11 @@ nodes:
         output: |
           True
         note: write_text / read_text 是 pathlib 提供的快捷方法，一行顶三行。
+    mastery:
+      tier: 会用
+      must: 用 with 读写文本文件；处理编码；用 pathlib 拼路径而不是手拼字符串
+      enough: 遇到乱码第一反应是查 encoding；不用操心 close()
+      beyond: 二进制文件、内存映射、大文件流式处理、异步 IO——处理 MB 以内的文本文件完全用不上
     acceptance:
       - 能用 with 读写文件而不手动 close
       - 遇到中文乱码能自己定位是编码问题
@@ -1591,6 +1636,11 @@ nodes:
               return 1 / 0
           ZeroDivisionError: division by zero
         note: 排查顺序：先看最后一行的异常名 → 找到自己代码的文件名和行号 → 检查那一行。
+    mastery:
+      tier: 会用
+      must: 能预判代码在哪会出错并加上处理；能读懂 traceback 的最后一行
+      enough: 程序因输入非法而崩掉时，你知道该在哪加 try，而不是靠满屏 print 试出来
+      beyond: 自定义异常体系的设计、异常链（raise from）、contextlib 与上下文管理器协议——现在只需要做到「except 具体类型，不用裸 except」
     acceptance:
       - 能预判代码可能在哪里出错并加上处理
       - 能说清 except Exception 一把抓为什么不好
@@ -1695,6 +1745,11 @@ nodes:
           [project.optional-dependencies]
           dev = ["pytest>=7.0"]
         note: 有了 pyproject.toml，一般就不需要再手写 setup.py。
+    mastery:
+      tier: 会用
+      must: 为项目建独立环境、装包、导出 requirements.txt；能诊断「pip 装成功了但 import 失败」
+      enough: 换一台机器、或者把项目给别人，靠 requirements.txt 能复现出能跑的环境
+      beyond: 依赖冲突的深度排查（pip 的解析算法）、poetry / pdm / uv 等新工具、私有源搭建——venv + pip 足够撑完这个阶段
     acceptance:
       - 能为一个项目建立独立虚拟环境并在其中装包
       - 能说清「为什么不能所有项目共用一个环境」
@@ -1812,6 +1867,11 @@ nodes:
           .vscode/*
           !.vscode/settings.json
         note: 已经提交过才发现，要用 git rm -r --cached <路径> 从索引里移除。
+    mastery:
+      tier: 了解
+      must: 知道一个 Python 项目通常有哪些顶层文件，能照着模板搭出能跑的骨架
+      enough: 看到别人的项目目录，能说出每个文件大概是干什么的；自己的项目不再把所有代码堆在根目录
+      beyond: 大型项目的分层架构（DDD、六边形架构）、monorepo 管理——阶段一的要求只有一条：别乱堆
     acceptance:
       - 能从零搭出一个含「包 + 测试 + README + 依赖声明」的项目骨架
       - 能说清每个顶层文件是干什么用的
@@ -1937,6 +1997,11 @@ nodes:
           }
           {"b":2,"a":1}
         note: 给人看用 indent，给机器传（请求体积敏感）用紧凑格式。
+    mastery:
+      tier: 会用
+      must: 把 JSON 解析成 dict 并安全取出嵌套字段；分得清 load / loads
+      enough: 拿到一份 API 返回的数据，能顺利取出需要的字段且字段缺失时不崩
+      beyond: JSON Schema 校验、自定义序列化器（default 参数）、流式解析——json.loads + .get() 覆盖现阶段所有场景
     acceptance:
       - 能把 JSON 字符串解析成 dict 并取出嵌套字段
       - 能区分「读文件」和「解析字符串」两组函数
@@ -2067,6 +2132,11 @@ nodes:
 
           headers = {"Authorization": f"Bearer {key}"}
         note: 代码会进仓库、会被分享、会被截图；环境变量不会。
+    mastery:
+      tier: 会用
+      must: 调通一个公开 API；处理超时与非 200 响应；密钥放进环境变量而不是写死在代码里
+      enough: 拿到一份 API 文档能自己写出可用的请求代码；出问题时能判断是网络、认证还是参数错了
+      beyond: HTTP/2、TLS 握手细节、连接池调优、异步并发请求——同步请求 + 设超时，覆盖现阶段所有需求
     acceptance:
       - 能调用一个公开 API 并把结果解析出来
       - 能处理超时、非 200 响应、字段缺失三种情况
@@ -2187,6 +2257,11 @@ nodes:
           git push gitee main
           git push gitee --tags
         note: 两个远程独立，推完用 git ls-remote 核对两边 hash 是否一致。
+    mastery:
+      tier: 会用
+      must: 把一个本地项目独立发布成可访问的公开仓库；README 别人照着能跑通
+      enough: 把仓库链接发给一个陌生人，他不问你任何问题就能把项目跑起来
+      beyond: CI/CD 流水线设计、多平台发版、开源治理（CLA、行为准则）——现阶段只要「能访问、能跑通、有 LICENSE」
     acceptance:
       - 自己的练习项目能在网上被访问到
       - 别人按 README 能装能跑
